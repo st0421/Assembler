@@ -1,25 +1,14 @@
 package assembler;
-/*
- *  ¾î¼Àºí·¯ PPT ÆÄÀÏ¿¡ Á¶°¢³­ ÄÚµåµéÀ» ¸ğ¾ÆºÃ½À´Ï´Ù.
- *  ¸Ş¸ğ¸® ÀÔ·Â, T0, T1, T2°¡ ±¸ÇöµÇ¾îÀÖ½À´Ï´Ù.
- *  T2 ÀÌÈÄ´Â ±¸ÇöµÇÁö ¾Ê¾Ò±â¿¡ PPTÀÇ °á°ú°ª°ú Â÷ÀÌ°¡ ÀÖ½À´Ï´Ù.
- *  HLT°¡ ±¸ÇöµÇÁö ¾Ê¾Ò½À´Ï´Ù!
- *  
- *  ±¸ÇöÀÌ ÇÊ¿äÇÑ ±â´ÉÀº ´ÙÀ½°ú °°½À´Ï´Ù.
- *  1. asm ÆÄÀÏÀ» ÀĞ¾î¼­ setMemory¸¦ ÁøÇàÇÏ´Â ±â´É(ÇÊ¿ä½Ã).
- *  2. instructionCheck(), Áï T3ÀÌÈÄÀÇ µ¿ÀÛÀ» ÁøÇàÇÏ´Â ±â´É.
- *  3. Ãâ·Â ÇüÅÂ ´Ùµë±â(ÇÊ¿ä½Ã)
- * 
- * */
+
 public class Assignment {
 	public static void main(String[] args) {
 
 		instructionCycle cpu = new instructionCycle();
-		System.out.println("Ç¥ 6-2 ÇÁ·Î±×·¥ µ¿ÀÛ!!!!!");
+		System.out.println("í‘œ 6-2 í”„ë¡œê·¸ë¨ ë™ì‘!!!!!");
 		cpu.printCycle();
 
 		cpu = new instructionCycle(1);
-		System.out.println("Ç¥ 6-9 ÇÁ·Î±×·¥ µ¿ÀÛ!!!!!");
+		System.out.println("í‘œ 6-9 í”„ë¡œê·¸ë¨ ë™ì‘!!!!!");
 		cpu.printCycle();
 
 	}
