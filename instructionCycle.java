@@ -57,11 +57,10 @@ public class instructionCycle {
 				System.out.println("------------------------------------------------");
 				System.out.println();
 			}
-		} catch (Exception e) { 
-			/*
-			 	원문은 catch ( HaltException e).
-			 	미구현이므로 Exception으로 변경
-			 */
+		} catch (HaltException e) { 
+			
+			//미구현
+			
 			System.out.println("종료 됩니다.");
 		}
 	}
@@ -214,11 +213,14 @@ public class instructionCycle {
 	
 	
 	
-	private void instructionCheck() throws HaltException {
+	private void instructionCheck() throws HaltException { //T3 수행
 		System.out.println("T3: ");
 		System.out.println("instruction: " + symbolCheck(IR));
 		
-		if(head == 7) {	//레지스터 명령어 
+		if(head == 7) {	
+			
+			//레지스터 명령어 
+			//미구현
 			
 		}
 		
