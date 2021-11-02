@@ -219,7 +219,7 @@ public class instructionCycle {
 		
 		if(head == 7) {	
 			
-			//레지스터 명령어 
+			//레지스터 참조 명령어 
 			//미구현
 			
 		}
@@ -255,7 +255,7 @@ public class instructionCycle {
 			}
 		}
 		
-		else {
+		else {	//메모리 참조 명령어
 			System.out.println("Nothing");
 		}
 	}
