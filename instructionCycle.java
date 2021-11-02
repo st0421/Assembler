@@ -7,7 +7,7 @@ public class instructionCycle {
 	private short[] M = new short[5000];
 	private String symbol;
 
-	// Ç¥ 6-2 ¸Ş¸ğ¸® ¼¼ÆÃ ºÎºĞ.
+	// í‘œ 6-2 ë©”ëª¨ë¦¬ ì„¸íŒ… ë¶€ë¶„.
 	instructionCycle() {
 		setMemory1();
 	}
@@ -22,7 +22,7 @@ public class instructionCycle {
 		M[6] = 0x0000;				// 0000
 	}
 
-	// Ç¥ 6-9 ¸Ş¸ğ¸® ¼¼ÆÃ ºÎºĞ.
+	// í‘œ 6-9 ë©”ëª¨ë¦¬ ì„¸íŒ… ë¶€ë¶„.
 	instructionCycle(int r) {
 		setMemory2();
 	}
@@ -40,7 +40,7 @@ public class instructionCycle {
 									// 		END
 	}
 
-	// »çÀÌÅ¬À» ¼öÇàÇÏ´Â ºÎºĞ.
+	// ì‚¬ì´í´ì„ ìˆ˜í–‰í•˜ëŠ” ë¶€ë¶„.
 	void printCycle() {
 		try {
 			while (true) {
@@ -52,17 +52,17 @@ public class instructionCycle {
 				T2();
 				/*
 					instructionCheck(); 
-					T2 ÀÌÈÄ¸¦ ¼öÇàÇÑ´Ù. ¹Ì±¸ÇöÀÌ¹Ç·Î ÁÖ¼®Ã³¸®.
+					T2 ì´í›„ë¥¼ ìˆ˜í–‰í•œë‹¤. ë¯¸êµ¬í˜„ì´ë¯€ë¡œ ì£¼ì„ì²˜ë¦¬.
 				*/
 				System.out.println("------------------------------------------------");
 				System.out.println();
 			}
 		} catch (Exception e) { 
 			/*
-			 	¿ø¹®Àº catch ( HaltException e).
-			 	¹Ì±¸ÇöÀÌ¹Ç·Î ExceptionÀ¸·Î º¯°æ
+			 	ì›ë¬¸ì€ catch ( HaltException e).
+			 	ë¯¸êµ¬í˜„ì´ë¯€ë¡œ Exceptionìœ¼ë¡œ ë³€ê²½
 			 */
-			System.out.println("Á¾·á µË´Ï´Ù.");
+			System.out.println("ì¢…ë£Œ ë©ë‹ˆë‹¤.");
 		}
 	}
 
@@ -90,11 +90,11 @@ public class instructionCycle {
 	}
 
 	private void T2() {
-		SC++; // sc Áõ°¡½ÃÅ°°í.
-		symbol = symbolCheck(IR); // ¸í·É¾î È®ÀÎ(decode)
+		SC++; // sc ì¦ê°€ì‹œí‚¤ê³ .
+		symbol = symbolCheck(IR); // ëª…ë ¹ì–´ í™•ì¸(decode)
 
-		AR = (short) (IR & 0x0fff); // IR(0-11) AR·Î Àü¼Û
-		I = indirection; // symbolic check¿¡ indirection Á¸Àç.
+		AR = (short) (IR & 0x0fff); // IR(0-11) ARë¡œ ì „ì†¡
+		I = indirection; // symbolic checkì— indirection ì¡´ì¬.
 
 		System.out.println("T2 : ");
 		System.out.println("Decode operation code in IR(12-14)");
@@ -105,18 +105,18 @@ public class instructionCycle {
 	}
 
 	private String symbolCheck(int a) {
-		// [0~6] : ¸Ş¸ğ¸®_Á÷Á¢, [7] : ·¹Áö½ºÅÍ, [8~E] : ¸Ş¸ğ¸®_°£Á¢, [F] : ÀÔÃâ·Â
-		head = (short) ((short) a / 0x1000); // IR(15)È®ÀÎ.
+		// [0~6] : ë©”ëª¨ë¦¬_ì§ì ‘, [7] : ë ˆì§€ìŠ¤í„°, [8~E] : ë©”ëª¨ë¦¬_ê°„ì ‘, [F] : ì…ì¶œë ¥
+		head = (short) ((short) a / 0x1000); // IR(15)í™•ì¸.
 		D7 = 0;
 		indirection = (short) (head / 8); // I=0 [0~6], I=1 [8~E]
 		symbol = "nop";
 		String address = Integer.toHexString(a + 0x10000).substring(2);
 
-		// 7XXX -> ·¹Áö½ºÅÍ ¸í·É¾î(0111 XXXX XXXX XXXX)
+		// 7XXX -> ë ˆì§€ìŠ¤í„° ëª…ë ¹ì–´(0111 XXXX XXXX XXXX)
 		if (head == 7) {
 			address = "   ";
 			D7 = 1;
-			switch (a & 0x0FFF) { // IR(11-0)È®ÀÎ
+			switch (a & 0x0FFF) { // IR(11-0)í™•ì¸
 			case 0x800:
 				symbol = "CLA";
 				break;
@@ -156,10 +156,10 @@ public class instructionCycle {
 			}
 		}
 
-		// FXXX -> ÀÔÃâ·Â ¸í·É¾î(1111 XXXX XXXX XXXX)
+		// FXXX -> ì…ì¶œë ¥ ëª…ë ¹ì–´(1111 XXXX XXXX XXXX)
 		else if (head == 0xf) { // HEX(0xf) = DEC(15) = BIN(1111)
 			address = "   ";
-			switch (a & 0x0FFF) { // IR(11-0)È®ÀÎ
+			switch (a & 0x0FFF) { // IR(11-0)í™•ì¸
 			case 0x800:
 				symbol = "INP";
 				break;
@@ -181,7 +181,7 @@ public class instructionCycle {
 			}
 		}
 		
-		// ¸Ş¸ğ¸® ¸í·É¾î
+		// ë©”ëª¨ë¦¬ ëª…ë ¹ì–´
 		else {
 			switch (head % 8) { 
 			case 0:
@@ -210,5 +210,51 @@ public class instructionCycle {
 				symbol = "I " + symbol; 
 		}
 		return symbol + "  " + address; // ex) I STA 751
+	}
+	
+	
+	
+	private void instructionCheck() throws HaltException {
+		System.out.println("T3: ");
+		System.out.println("instruction: " + symbolCheck(IR));
+		
+		if(head == 7) {	//ë ˆì§€ìŠ¤í„° ëª…ë ¹ì–´ 
+			
+		}
+		
+		else if(head == 0xf) { //ì…ì¶œë ¥ ëª…ë ¹ì–´ 
+			System.out.println("Excute input-output instrunction");
+			switch(symbol) {
+			case "INP":
+				System.out.println("AC(0-7) <- INPR, FGI <- 0");
+				System.out.println("AC(0-7) = " + Integer.toHexString(0x00ff & AC).substring(1));
+	            		AC = INPR; FGI = 0;
+				break;
+			case "OUT":
+				System.out.println("OUTR <- AC(0-7), FGO <- 0");
+	            		OUTR = (short) (0x00ff & AC); FGO = 0;
+				break;
+			case "SKI":
+				System.out.println("If (FGI = 1) then (PC <- PC + 1)");
+				if (FGI == 1) {PC = (short) (PC + 1);}
+				break;
+			case "SKO":
+				System.out.println("If (FGO = 1) then (PC <- PC + 1)");
+				if (FGO == 1) {PC = (short) (PC + 1);}
+				break;
+			case "ION":
+				System.out.println("IEN <- 1");
+				IEN = 1;
+				break;
+			case "IOF":
+				System.out.println("IEN <- 0");
+				IEN = 0;
+				break;
+			}
+		}
+		
+		else {
+			System.out.println("Nothing");
+		}
 	}
 }
