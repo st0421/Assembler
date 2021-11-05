@@ -9,10 +9,10 @@ public class Assembler {
 
 
 	class instructionCycle{
-	   private short DR, AR, AC, IR, INPR, OUTPR, TR, SC, indirection, head, I, E, S, D7, INpR, FGI, OUTR, FGO, IEN,HLT;   //각각의 메모리 또는 레지스터
+	   private int DR, AR, AC, IR, INPR, OUTPR, TR, SC, indirection, head, I, E, S, D7, INpR, FGI, OUTR, FGO, IEN,HLT;   //각각의 메모리 또는 레지스터
 	   int h,END; //h는 HLT의 LC. END는 마지막 LC
-	   short PC = 0;         //프로그램 카운터
-	   private short[] M = new short[5000];
+	   int PC = 0;         //프로그램 카운터
+	   private int[] M = new int[5000];
 	   String var[]= {"A","B","C"};
 	   private String symbol,operation;
 
@@ -28,7 +28,7 @@ public class Assembler {
 	      M[2] = 0x3006;
 	      M[3] = 0x7001;
 	      M[4] = 0x0053;
-	      M[5] = (short)0xffe9;
+	      M[5] = 0xffe9;
 	      M[6] = 0x0000;
 	      h=3;
 	      END=6;
@@ -42,8 +42,9 @@ public class Assembler {
 	   }
 	   
 	   private void showMemory() {
+		   System.out.println("Location\tInstruction");
 		   for(int i=0;i<7;i++) {
-			   System.out.println("M["+i+"] ="+Integer.toHexString(M[i]+0x100000).substring(2).toUpperCase());
+			   System.out.println("  "+i+"\t\t "+Integer.toHexString(M[i]+0x100000).substring(2).toUpperCase());
 		   }
 	   }
 
@@ -372,9 +373,11 @@ public class Assembler {
 	       }
 	   		System.out.println();
 	   		for(int i=0;i<END-h;i++) { //h는 HLT의 LC. END는 메모리 마지막.
-	   		System.out.print(var[i]+" : "+M[h+1+i]+"\t");
+	   		System.out.print(var[i]+" : "+(short)M[h+1+i]+",\t");
 	   		}
 	   		System.out.println();
-	   		showMemory();
+	   		for(int i=0;i<=END;i++) {
+	   			System.out.print("M["+i+"] : "+Integer.toHexString(M[i]+ 0x10000).substring(1).toUpperCase()+"\t");
+	   		}
 	   }
 	} 
