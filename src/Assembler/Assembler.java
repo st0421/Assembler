@@ -10,13 +10,15 @@ public class Assembler {
 
 	class instructionCycle{
 	   private short DR, AR, AC, IR, INPR, OUTPR, TR, SC, indirection, head, I, E, S, D7, INpR, FGI, OUTR, FGO, IEN,HLT;   //각각의 메모리 또는 레지스터
-	   int count=10;
+	   int h,END; //h는 HLT의 LC. END는 마지막 LC
 	   short PC = 0;         //프로그램 카운터
 	   private short[] M = new short[5000];
+	   String var[]= {"A","B","C"};
 	   private String symbol,operation;
 
 	   instructionCycle(){                
 	      setMemory();
+	      showMemory();
 	   }
 	   
 
@@ -28,15 +30,29 @@ public class Assembler {
 	      M[4] = 0x0053;
 	      M[5] = (short)0xffe9;
 	      M[6] = 0x0000;
+	      h=3;
+	      END=6;
+	      /*
+	      String[] var = new String[END-h];
+	      String example[]= {"A","B","C"};
+	      for(int i=0;i<var.length;i++) {
+	    	  var[i]=example[i];
+	      }*/
+	      
 	   }
 	   
-
+	   private void showMemory() {
+		   for(int i=0;i<7;i++) {
+			   System.out.println("M["+i+"] ="+Integer.toHexString(M[i]+0x100000).substring(2).toUpperCase());
+		   }
+	   }
 
 	   private String symbolCheck(int a) {                          //instruction 값인지 체크해 심볼을 문자열로 반환하는 메소드
 	      //instruction 값인지 체크해 심볼을 문자열로 반환하는 메소드
 
+		 
 	      head = (short) ((short)a / 0x1000) ; 
-	      //16진수의 맨 앞을 얻음 ex) 0x1234 이면 head = 1
+	      //16진수의 맨 앞을 얻음 ex) 0x3006 이면 head = 6
 	      D7 = 0;
 
 	      indirection = (short) (head / 8); 
@@ -45,7 +61,7 @@ public class Assembler {
 	      symbol = "";
 
 	      String address = Integer.toHexString(a + 0x10000).substring(2);   
-	      //주소값을 미리 넣는다.
+	      //주소값 넣는다.
 
 	      if(head == 7){ // 7xxx 
 	         address = "   "; //주소를 없앤다
@@ -148,28 +164,18 @@ public class Assembler {
 
 	   }
 
-	   private void start(){            //시작 메소드
-	      SC = 0;
-	   }
-
+	 
 	   private void T0(){               // T0 일 때
-	      SC++;
 	      AR = (short) PC;
-	  
 	   }
 
 	   private void T1(){              // T1 일 때
-	      SC++;
 	      IR = M[AR]; PC = (short) (PC + 1);
-	     
 	   }
 
 	   private void T2(){             //T2 일 때
-	      SC++;
 	      symbol = symbolCheck(M[AR]);
 	      AR = (short) (IR & 0x0fff); I = indirection;
-
-	     
 	   }
 
 	   private void instructionCheck() {  //인스트럭션 체크하고 명령어에 따라 T3, T4, T5 ... 할일 결정
@@ -340,12 +346,13 @@ public class Assembler {
 	      }
 	   }
 
-	   void printCycle(){    //명령어 사이클을 눈에 보이게 프린트 해준다.
-		   while(count>0){
+	   void printCycle(){//명령어 사이클을 눈에 보이게 프린트 해준다.
+		   int count=h; 
+		   while(count>=0){
+			    System.out.println();
 	            System.out.println("-- Location : " 
 	            + Integer.toHexString(PC) );
 	            System.out.println("01.입력 = "+Integer.toHexString(M[PC]+0x100000).substring(2).toUpperCase());
-	            start();
 	            T0();
 	            T1();
 	            T2();
@@ -358,10 +365,16 @@ public class Assembler {
 	            +"AC["+Integer.toHexString(AC + 0x10000).substring(2).toUpperCase() +"],"
 	            +"IR["+Integer.toHexString(IR + 0x10000).substring(2).toUpperCase()+"], "
 	            +"TR["+Integer.toHexString(TR + 0x10000).substring(2).toUpperCase()+"]");
+
 	            System.out.println();
-	            System.out.println();
+	           
 	            count= count-1;
 	       }
+	   		System.out.println();
+	   		for(int i=0;i<END-h;i++) { //h는 HLT의 LC. END는 메모리 마지막.
+	   		System.out.print(var[i]+" : "+M[h+1+i]+"\t");
+	   		}
+	   		System.out.println();
+	   		showMemory();
 	   }
-
 	} 
