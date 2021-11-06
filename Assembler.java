@@ -9,10 +9,12 @@ public class Assembler {
 
 
 	class instructionCycle{
-	   private short DR, AR, AC, IR, INPR, TR, SC, indirection, head, I, E, S, R, D7, FGI, OUTR, FGO, IEN, HLT;   //각각의 메모리 또는 레지스터.
+	   private char DR, AR, AC, IR, INPR, TR, SC, S, R, D7, OUTR, FGO, IEN, HLT;   //각각의 메모리 또는 레지스터.
 	   int h,END; //h = HTL의 LC. END = 마지막 LC
-	   short PC = 0;         //프로그램 카운터
-	   private short[] M = new short[5000];
+	   char PC = 0;         //프로그램 카운터
+	   char FGI = 1;        // FGI가 1인 상황을 미리 가정.
+	   short head, indirection, I, E; 
+	   private char[] M = new char[5000];
 	   String var[]= {"A","B","C"};
 	   private String symbol,operation;
 
@@ -21,66 +23,54 @@ public class Assembler {
 	      showMemory();
 	   }
 	   
-	   /*
+	   
 	   private void setMemory(){            
 	      M[0] = 0x2004;
 	      M[1] = 0x1005;
 	      M[2] = 0x3006;
 	      M[3] = 0x7001;
 	      M[4] = 0x0053;
-	      M[5] = (short)0xffe9;
+	      M[5] = (char)0xffe9;
 	      M[6] = 0x0000;
 	      h=3; // HLT위치
 	      END=6;	      
 	   }
-	   */
-	   
-	   /*
-	    * ============================================================================
-	    * << 조정중 >>
-		* 1. (short)0xF080 같은 알파벳 시작 16진수의 첫 자리를 인식하지 못하는 에러
-		* -> 해당 종류의 명령어를 전부 ADD로 인식.
-		* -> ION을 통해 IEN=1으로 설정 불가
-		* -> 인터럽트 발생x
-		* 
-		* 2. printCycle의 count 조절(setMemory2()의 h값)
-	    *============================================================================
-	    */
-	   
+	
 	   
 	   private void setMemory2(){   // 인터럽트 테스트용         
-		      M[0] = 0x2004; // LDA X
-		      M[1] = (short)0xf080; // ION , 현재 F인식 불가.
-		      M[2] = 0x3005; // STA Y , 3005
-		      M[3] = 0x7001; // HLT
-		      M[4] = 0x0100; // X
-		      M[5] = 0x0000; // Y
-		      M[6] = 0x0000; // END
-		      h=3; // 임의값 23.
+		      M[0] = 0x2004; 			// LDA X
+		      M[1] = (char)0xf080; 		// ION , IEN=1, 아직 R=0
+		      M[2] = 0x3005; 			// STA Y , 3005 // 여기서 조건확인. R=1
+		      // HLT실행 전에 interruptCheck()실행. M[0xFF]로 이동.
+		      M[3] = 0x7001; 			// HLT , 
+		      M[4] = 0x0100; 			// X
+		      M[5] = 0x0000; 			// Y
+		      M[6] = 0x0000; 			// END
+		      h=18; // 인터럽트 발생시 수동으로 맞춰줘야함 <- 개선필요
 		      END=6;    
 		      
-			  // 인터럽트 분기시 AR=0x0FF로 설정. M[0x0FF]에는 기존의 PC값 저장.
-			  M[0x0FF] = 0x0000; // 복귀주소 저장공간
-			  M[0x100] = 0x3200; // STA SAC
-			  M[0x101] = 0x7080; // CIR
-			  M[0x102] = 0x3201; // STA SE
-			  M[0x103] = (short)0xF200; // SKI
-			  M[0x104] = 0x4109; // BUN NXT
-			  M[0x105] = (short)0xF800; // INP
-			  M[0x106] = (short)0xF400; // OUT 
-			  M[0x107] = (short)0xB202; // STA PT1 I
-			  M[0x108] = 0X6202; // ISZ PT1
-			  M[0x109] = (short)0xF100; // NXT, SKO
-			  M[0x10A] = 0x410E; // BUN EXT
-			  M[0x10B] = (short)0xA205; // LDA PT2 I
-			  M[0x10C] = (short)0xF400; // OUT
-			  M[0x10D] = 0x6205; // ISZ PT2
-			  M[0x10E] = 0x2201; // EXT, LAD SE
-			  M[0x10F] = 0x7040; // CIL
-			  M[0x110] = 0x2200; // LDA SAC
-			  M[0x111] = (short)0xF080; // ION
-			  M[0x112] = (short)0xC0FF; // BUN ZRO I, 복귀
-							   
+			  // 이하 인터럽트. 표 6-23참고.
+			  M[0x0FF] = 0x0000; 		// 복귀주소(기존의 PC값) 저장공간
+			  M[0x100] = 0x3200;		// STA SAC
+			  M[0x101] = 0x7080; 		// CIR
+			  M[0x102] = 0x3201; 		// STA SE
+			  M[0x103] = (char)0xF200; 	// SKI
+			  M[0x104] = 0x4109; 		// BUN NXT
+			  M[0x105] = (char)0xF800; 	// INP
+			  M[0x106] = (char)0xF400; 	// OUT 
+			  M[0x107] = (char)0xB202; 	// STA PT1 I
+			  M[0x108] = 0X6202; 		// ISZ PT1
+			  M[0x109] = (char)0xF100; 	// NXT, SKO
+			  M[0x10A] = 0x410E; 		// BUN EXT
+			  M[0x10B] = (char)0xA205; 	// LDA PT2 I
+			  M[0x10C] = (char)0xF400;  // OUT
+			  M[0x10D] = 0x6205; 		// ISZ PT2
+			  M[0x10E] = 0x2201; 		// EXT, LAD SE
+			  M[0x10F] = 0x7040; 		// CIL
+			  M[0x110] = 0x2200; 		// LDA SAC
+			  M[0x111] = (char)0xF080; 	// ION
+			  M[0x112] = (char)0xC0FF; 	// BUN ZRO I, 복귀. // 0xC0FF
+					   
 			  M[0x200] = 0x0000; // SAC
 			  M[0x201] = 0x0000; // SE
 			  M[0x202] = 0x0208; // PT1 - Pointer to input Buffer 
@@ -98,11 +88,9 @@ public class Assembler {
 	   }
 
 	   private String symbolCheck(int a) {   //instruction 값인지 체크해 심볼을 문자열로 반환하는 메소드
-		   //instruction 값인지 체크해 심볼을 문자열로 반환하는 메소드
-
 		 
-	      head = (short) ((short)a / 0x1000) ; 
-	      //16진수의 맨 앞을 얻음 ex) 0x3006 이면 head = 6
+	      head = (short) ((char)a / 0x1000) ; 
+	      //16진수의 맨 앞을 얻음 ex) 0x3006 이면 head = 3
 	      D7 = 0;
 
 	      indirection = (short) (head / 8); 
@@ -196,40 +184,37 @@ public class Assembler {
 	         case 3: // (3xxx, Bxxx)
 	            symbol = "STA";
 	            break;
-	         case 4:
+	         case 4: // (4xxx, Cxxx)
 	            symbol = "BUN";
 	            break;
-	         case 5:
+	         case 5: // (5xxx, Dxxx)
 	            symbol = "BSA";
 	            break;
-	         case 6:
+	         case 6: // (6xxx, Exxx)
 	            symbol = "ISZ";
 	            break;
-	         }
-	         if (indirection == 1) // indirect bit가 1이면 간접 주소임을 표시한다..
-	            symbol = "I " + symbol;
+	         }    
 	      }
 
-	      return symbol + "  " + address; // symbol + 주소값 반환
+	      return symbol;
 
 	   }
-
+	 
 	 
 	   private void T0(){               // T0 
-	      AR = (short) PC;
+	      AR = (char) PC;
 	   }
 
 	   private void T1(){              // T1
-	      IR = M[AR]; PC = (short) (PC + 1);
+	      IR = M[AR]; PC = (char) (PC + 1);
 	   }
 
 	   private void T2(){             //T2 
 	      symbol = symbolCheck(M[AR]);
-	      AR = (short) (IR & 0x0fff); I = indirection;
+	      AR = (char) (IR & 0x0fff); I = indirection;
 	   }
 
 	   private void instructionCheck() {  //인스트럭션 체크하고 명령어에 따라 T3, T4, T5 ... 할일 결정
-	       symbol = symbol.substring(0,3);
 		   if(head == 7){      //D7 = 1 이고, I = 0 인경우
 	         switch(symbol) {
 	         case "CLA":
@@ -241,7 +226,7 @@ public class Assembler {
 	            
 	            break;
 	         case "CMA":
-	            AC = (short) ~(short)AC;
+	            AC = (char) ~(char)AC;
 	          
 	         case "CME":
 	            if(E == 0){
@@ -253,35 +238,35 @@ public class Assembler {
 	       
 	            break;
 	         case "CIR":
-	            E = (short) (AC & 0x0001); AC = (short) ((short)AC >> 1);
+	            E = (short) (AC & 0x0001); AC = (char) ((char)AC >> 1);
 	           
 	            break;
 	         case "CIL":
-	            E = I; AC = (short) ((short)AC << 1);
+	            E = I; AC = (char) ((char)AC << 1);
 	           
 	            break;
 	         case "INC":
-	            AC = (short) ((short)AC + (short)1);
+	            AC = (char) ((char)AC + (char)1);
 	         
 	            break;
 	         case "SPA":
 	            if(I == 0)
-	               PC = (short) ((short)PC + (short)1);
+	               PC = (char) ((char)PC + (char)1);
 	       
 	            break;
 	         case "SNA":
 	            if(I == 1)
-	               PC = (short) (PC + 1);
+	               PC = (char) (PC + 1);
 	           
 	            break;
 	         case "SZA":
 	            if(AC == 0)
-	               PC = (short) (PC + 1);
+	               PC = (char) (PC + 1);
 
 	            break;
 	         case "SZE":
 	            if(E == 0)
-	               PC = (short) (PC + 1);
+	               PC = (char) (PC + 1);
 
 	            break;
 	         case "HLT":
@@ -301,7 +286,7 @@ public class Assembler {
 	            break;
 	         case "OUT":
 
-	            OUTR = (short) (0x00ff & AC); FGO = 0; // FGO = 1일 때의 상황. AC 끝의 두자리만 OUTR로 이동.
+	            OUTR = (char) (0x00ff & AC); FGO = 0; // FGO = 1일 때의 상황. AC 끝의 두자리만 OUTR로 이동.
 	            break;
 	         case "SKI":
 
@@ -335,7 +320,7 @@ public class Assembler {
 
 	            DR = M[AR];
 
-	            AC = (short) (AC & DR);
+	            AC = (char) (AC & DR);
 	            SC = 0;
 
 	            break;
@@ -347,7 +332,7 @@ public class Assembler {
 	            if(AC < 0 && AC + DR < 0 && DR > 0 || AC > 0 && AC + DR > 0 && DR < 0){ ///오버플로우가 일어났을때
 	               Cout = 1;
 	            }
-	            AC = (short) (AC + DR);
+	            AC = (char) (AC + DR);
 	            E = (short) Cout;
 	            SC = 0;
 
@@ -374,7 +359,7 @@ public class Assembler {
 	         case "BSA":
 
 	            M[AR] = PC;
-	            AR = (short) (AR + 1);
+	            AR = (char) (AR + 1);
 
 	            PC = AR;
 	            SC = 0;
@@ -384,11 +369,11 @@ public class Assembler {
 
 	            DR = M[AR];
 
-	            DR = (short) (DR + 1);
+	            DR = (char) (DR + 1);
 
 	            M[AR] = DR;
 	            if(DR == 0){
-	               PC = (short) (PC + 1);
+	               PC = (char) (PC + 1);
 	            }
 	            SC = 0;
 
@@ -402,12 +387,12 @@ public class Assembler {
 		   TR = PC;
 		   
 		   //RT1
-		   M[AR] = TR; // M[0x0ff]에 복귀장소인 M[2] 저장.
+		   M[AR] = TR; // M[0x0FF]에 복귀장소인 M[3] 저장.
 		   PC = 0x0FF; 
 		   
 		   //RT2
 		   PC++;       // M[100]
-		   IEN = 0;	   // 이하 인터럽트 발생 차단
+		   IEN = 0;	   // 이하 인터럽트 발생 차단용
 		   R=0;
 		   SC = 0;
 	
@@ -426,10 +411,11 @@ public class Assembler {
 	            T0();
 	            T1();
 	            T2();
-	            R = (short) ((IEN == 0) ? 0 : (FGI == 1) ? 1 : (FGO == 1) ? 1 : 0); // 조건 확인 후 R 설정.
+	            R = (char) ((IEN == 0) ? 0 : (FGI == 1) ? 1 : (FGO == 1) ? 1 : 0); // 조건 확인 후 R 설정.
 	            instructionCheck();
 	            System.out.println("02.명령어 형식 = "+operation);
-	            System.out.println("03.Symbol ="+symbol.toUpperCase());
+	            if(I==1) System.out.println("03.Symbol ="+symbol.toUpperCase()+" I"); //I = 1 or 0 분리
+	            else System.out.println("03.Symbol ="+symbol.toUpperCase());
 	            System.out.println("AR["+Integer.toHexString(AR + 0x10000).substring(2).toUpperCase() +"], "
 	            +"PC["+Integer.toHexString(PC + 0x10000).substring(2).toUpperCase() +"], "
 	            +"DR["+Integer.toHexString(DR + 0x10000).substring(1).toUpperCase() +"], "
