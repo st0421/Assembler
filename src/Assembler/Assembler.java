@@ -7,11 +7,113 @@ public class Assembler {
 	   }
 	}
 
+/////////////////////////////////////////////////////////////
+
+
+
+	class Loader {
+		Scanner type = new Scanner(System.in);
+		static String s;
+		String[] code = new String[100]; //ì½”ë“œ ë„£ì„ ë°°ì—´ ìƒì„± 
+		int size = code.length;
+		
+		
+		public void input() {			//ì‚¬ìš©ì ì…ë ¥ ë°›ëŠ” ë©”ì†Œë“œ
+			int i = 0;
+			
+			do {
+				s = type.nextLine();	//user types codes
+				code[i] = s;
+				++i;
+			} while(s.contains("END")); //END ì…ë ¥ ì‹œ ì¢…ë£Œ 
+		}
+	}
+
+
+	
+	
+	
+	
+	class First_Pass {
+		Loader loader = new Loader();
+		private int LC;
+		private boolean bool;
+		private static String Label;
+		
+		public int getLC() {
+			return LC;
+		}
+		public boolean getBool() {
+			return bool;
+		}
+		public void setBool() {
+			this.bool = true;
+		}
+		
+
+		void First_Pass() {		//start first pass method
+			loader.input();
+
+			LC = 0;		//set LC as 0
+			for(int i=0; i<loader.size; i++){		//ì‚¬ìš©ìê°€ ì…ë ¥í•œ ì½”ë“œ ìˆ˜ ë§Œí¼ ë°˜ë³µ
+				
+				if(loader.code[LC].contains(",")) {	//ë¼ë²¨ ìœ ë¬´ íŒë³„ ì¡°ê±´ë¬¸ 
+					setBool();						//ì½¤ë§ˆê°€ ìˆìœ¼ë©´ boolì„ trueë¡œ ì„¤ì • 
+					Label = loader.code[LC].replaceAll(",*","");	//ì½”ë“œì— ìˆëŠ” ë¼ë²¨ ê¸°í˜¸ë¥¼ Labelì— ì €ì¥ 
+				}
+				
+				if(bool == true) {	//when comma exists
+					HashTable();	//put symbol in the hash table
+					LC++;
+				}
+				
+				else {	//when comma doesn't exist
+					String code = loader.code[LC];
+					String[] codecut = code.split("\\s");
+					switch (codecut[0]) {
+					case "ORG":
+					{
+						LC = Integer.parseInt(codecut[1]);	//set LC to the number after ORG 
+						continue;
+					}
+						
+					case "END":
+						break;
+						
+					default: 
+					{
+						LC++; 
+						continue;
+					}
+					}
+					break;
+				}
+			}
+		}
+		
+		
+		private static void HashTable() {		//ì•½ì‹ ì£¼ì†Œ-ê¸°í˜¸ í…Œì´ë¸” ì œì‘ ë©”ì†Œë“œ (í•´ì‹œí…Œì´ë¸”ì— ë¼ë²¨ ê¸°í˜¸ì™€ LCê°’ë§Œ ì €ì¥)
+			Hashtable<String, Integer> ht = new Hashtable<>();
+			First_Pass fp = new First_Pass();
+			
+			do {
+				ht.put(Label,fp.getLC());
+				if(Label.contains(",")) {
+					ht.put(Label.replaceAll(",*",""),fp.getLC());
+				}
+			}while(Label.contains("END"));
+		}	
+	}
+	
+	
+	
+
+/////////////////////////////////////////////////////////////
 
 	class instructionCycle{
-	   private int DR, AR, AC, IR, INPR, OUTPR, TR, SC, indirection, head, I, E, S, D7, INpR, FGI, OUTR, FGO, IEN,HLT;   //°¢°¢ÀÇ ¸Ş¸ğ¸® ¶Ç´Â ·¹Áö½ºÅÍ
-	   int h,END; //h´Â HLTÀÇ LC. END´Â ¸¶Áö¸· LC
-	   int PC = 0;         //ÇÁ·Î±×·¥ Ä«¿îÅÍ
+	   private int DR, AR, AC, IR, INPR, OUTPR, TR, SC, indirection, head, I, E, S, D7, INpR, FGI, OUTR, FGO, IEN,HLT;   //ê°ê°ì˜ ë©”ëª¨ë¦¬ ë˜ëŠ” ë ˆì§€ìŠ¤í„°
+	   int h,END; //hëŠ” HLTì˜ LC. ENDëŠ” ë§ˆì§€ë§‰ LC
+	   int PC = 0;         //í”„ë¡œê·¸ë¨ ì¹´ìš´í„°
 	   private int[] M = new int[5000];
 	   String var[]= {"A","B","C"};
 	   private String symbol,operation;
@@ -48,27 +150,27 @@ public class Assembler {
 		   }
 	   }
 
-	   private String symbolCheck(int a) {                          //instruction °ªÀÎÁö Ã¼Å©ÇØ ½Éº¼À» ¹®ÀÚ¿­·Î ¹İÈ¯ÇÏ´Â ¸Ş¼Òµå
-	      //instruction °ªÀÎÁö Ã¼Å©ÇØ ½Éº¼À» ¹®ÀÚ¿­·Î ¹İÈ¯ÇÏ´Â ¸Ş¼Òµå
+	   private String symbolCheck(int a) {                          //instruction ê°’ì¸ì§€ ì²´í¬í•´ ì‹¬ë³¼ì„ ë¬¸ìì—´ë¡œ ë°˜í™˜í•˜ëŠ” ë©”ì†Œë“œ
+	      //instruction ê°’ì¸ì§€ ì²´í¬í•´ ì‹¬ë³¼ì„ ë¬¸ìì—´ë¡œ ë°˜í™˜í•˜ëŠ” ë©”ì†Œë“œ
 
 		 
 	      head = (short) ((short)a / 0x1000) ; 
-	      //16Áø¼öÀÇ ¸Ç ¾ÕÀ» ¾òÀ½ ex) 0x3006 ÀÌ¸é head = 6
+	      //16ì§„ìˆ˜ì˜ ë§¨ ì•ì„ ì–»ìŒ ex) 0x3006 ì´ë©´ head = 6
 	      D7 = 0;
 
 	      indirection = (short) (head / 8); 
-	      //indirect bit ¸¦ ¾òÀ½ ex) 0~7·Î ½ÃÀÛÇÏ¸é 0, 8~f·Î ½ÃÀÛÇÏ¸é 1
+	      //indirect bit ë¥¼ ì–»ìŒ ex) 0~7ë¡œ ì‹œì‘í•˜ë©´ 0, 8~fë¡œ ì‹œì‘í•˜ë©´ 1
 
 	      symbol = "";
 
 	      String address = Integer.toHexString(a + 0x10000).substring(2);   
-	      //ÁÖ¼Ò°ª ³Ö´Â´Ù.
+	      //ì£¼ì†Œê°’ ë„£ëŠ”ë‹¤.
 
 	      if(head == 7){ // 7xxx 
-	         address = "   "; //ÁÖ¼Ò¸¦ ¾ø¾Ø´Ù
+	         address = "   "; //ì£¼ì†Œë¥¼ ì—†ì•¤ë‹¤
 	         D7 = 1;
 	         operation = "'Register' reference operation";
-	         switch( a & 0x0FFF){ //µŞÀÚ¸®¸¦ ºñ±³ÇÑ´Ù.
+	         switch( a & 0x0FFF){ //ë’·ìë¦¬ë¥¼ ë¹„êµí•œë‹¤.
 	         case 0x800:
 	            symbol = "CLA";
 	            break;
@@ -108,10 +210,10 @@ public class Assembler {
 	         }
 	      }
 	      else if(head == 0xf){ // fxxx
-	         address = "   "; //ÁÖ¼Ò¸¦ ¾ø¾Ø´Ù
+	         address = "   "; //ì£¼ì†Œë¥¼ ì—†ì•¤ë‹¤
 	         D7 = 1;
 	         operation = "'I/O' reference operation";
-	         switch( a & 0x0FFF){ //µŞÀÚ¸®¸¦ ºñ±³ÇÑ´Ù.
+	         switch( a & 0x0FFF){ //ë’·ìë¦¬ë¥¼ ë¹„êµí•œë‹¤.
 	         case 0x800:
 	            symbol = "INP";
 	            break;
@@ -157,31 +259,31 @@ public class Assembler {
 	            symbol = "ISZ";
 	            break;
 	         }
-	         if (indirection == 1) // indirect bit °¡ 1 ÀÌ¸é °£Á¢ ÁÖ¼ÒÀÓÀ» Ç¥½ÃÇÑ´Ù.
+	         if (indirection == 1) // indirect bit ê°€ 1 ì´ë©´ ê°„ì ‘ ì£¼ì†Œì„ì„ í‘œì‹œí•œë‹¤.
 	            symbol = "I " + symbol;
 	      }
 
-	      return symbol + "  " + address; // symbol + ÁÖ¼Ò°ª ¹İÈ¯
+	      return symbol + "  " + address; // symbol + ì£¼ì†Œê°’ ë°˜í™˜
 
 	   }
 
 	 
-	   private void T0(){               // T0 ÀÏ ¶§
+	   private void T0(){               // T0 ì¼ ë•Œ
 	      AR = (short) PC;
 	   }
 
-	   private void T1(){              // T1 ÀÏ ¶§
+	   private void T1(){              // T1 ì¼ ë•Œ
 	      IR = M[AR]; PC = (short) (PC + 1);
 	   }
 
-	   private void T2(){             //T2 ÀÏ ¶§
+	   private void T2(){             //T2 ì¼ ë•Œ
 	      symbol = symbolCheck(M[AR]);
 	      AR = (short) (IR & 0x0fff); I = indirection;
 	   }
 
-	   private void instructionCheck() {  //ÀÎ½ºÆ®·°¼Ç Ã¼Å©ÇÏ°í ¸í·É¾î¿¡ µû¶ó T3, T4, T5 ... ÇÒÀÏ °áÁ¤
+	   private void instructionCheck() {  //ì¸ìŠ¤íŠ¸ëŸ­ì…˜ ì²´í¬í•˜ê³  ëª…ë ¹ì–´ì— ë”°ë¼ T3, T4, T5 ... í• ì¼ ê²°ì •
 	       symbol = symbol.substring(0,3);
-		   if(head == 7){      //D7 = 1 ÀÌ°í, I = 0 ÀÎ°æ¿ì
+		   if(head == 7){      //D7 = 1 ì´ê³ , I = 0 ì¸ê²½ìš°
 	         switch(symbol) {
 	         case "CLA":
 	            AC = 0;
@@ -243,7 +345,7 @@ public class Assembler {
 	         SC = 0;
 
 	      }
-	      else if(head == 0xf){  //D7 = 1 ÀÌ°í, I = 1 ÀÎ°æ¿ì
+	      else if(head == 0xf){  //D7 = 1 ì´ê³ , I = 1 ì¸ê²½ìš°
 
 	         switch(symbol){
 	         case "INP":
@@ -295,7 +397,7 @@ public class Assembler {
 
 	            DR = M[AR];
 
-	            if(AC < 0 && AC + DR < 0 && DR > 0 || AC > 0 && AC + DR > 0 && DR < 0){ //¿À¹öÇÃ·Î¿ì°¡ ÀÏ¾î³µÀ»¶§
+	            if(AC < 0 && AC + DR < 0 && DR > 0 || AC > 0 && AC + DR > 0 && DR < 0){ //ì˜¤ë²„í”Œë¡œìš°ê°€ ì¼ì–´ë‚¬ì„ë•Œ
 	               Cout = 1;
 	            }
 	            AC = (short) (AC + DR);
@@ -347,18 +449,18 @@ public class Assembler {
 	      }
 	   }
 
-	   void printCycle(){//¸í·É¾î »çÀÌÅ¬À» ´«¿¡ º¸ÀÌ°Ô ÇÁ¸°Æ® ÇØÁØ´Ù.
+	   void printCycle(){//ëª…ë ¹ì–´ ì‚¬ì´í´ì„ ëˆˆì— ë³´ì´ê²Œ í”„ë¦°íŠ¸ í•´ì¤€ë‹¤.
 		   int count=h; 
 		   while(count>=0){
 			    System.out.println();
 	            System.out.println("-- Location : " 
 	            + Integer.toHexString(PC) );
-	            System.out.println("01.ÀÔ·Â = "+Integer.toHexString(M[PC]+0x100000).substring(2).toUpperCase());
+	            System.out.println("01.ì…ë ¥ = "+Integer.toHexString(M[PC]+0x100000).substring(2).toUpperCase());
 	            T0();
 	            T1();
 	            T2();
 	            instructionCheck();
-	            System.out.println("02.¸í·É¾î Çü½Ä = "+operation);
+	            System.out.println("02.ëª…ë ¹ì–´ í˜•ì‹ = "+operation);
 	            System.out.println("03.Symbol ="+symbol.toUpperCase());
 	            System.out.println("AR["+Integer.toHexString(AR + 0x10000).substring(2).toUpperCase() +"], "
 	            +"PC["+Integer.toHexString(PC + 0x10000).substring(2).toUpperCase() +"], "
@@ -372,7 +474,7 @@ public class Assembler {
 	            count= count-1;
 	       }
 	   		System.out.println();
-	   		for(int i=0;i<END-h;i++) { //h´Â HLTÀÇ LC. END´Â ¸Ş¸ğ¸® ¸¶Áö¸·.
+	   		for(int i=0;i<END-h;i++) { //hëŠ” HLTì˜ LC. ENDëŠ” ë©”ëª¨ë¦¬ ë§ˆì§€ë§‰.
 	   		System.out.print(var[i]+" : "+(short)M[h+1+i]+",\t");
 	   		}
 	   		System.out.println();
