@@ -16,20 +16,20 @@ public class Assembler {
 
 
 	class Loader {
+		/* "사용자가 텔레타이프 상에서 기호 프로그램을 타이핑하면 로더(Loader) 프로그램은 기호 프로그램을 메모리 안으로 입력시킨다." (p.148) */
 		Scanner type = new Scanner(System.in);
 		static String s;
-		String[] code = new String[100]; //코드 넣을 배열 생성 
+		String[] code = new String[100]; 	//사용자가 입력한 코드 넣을 배열 생성 
 		int size = code.length;
 		
 		
-		public void input() {			//사용자 입력 받는 메소드
+		public void input() {			//사용자의 입력을 받는 input 메소드
 			int i = 0;
-			
 			do {
-				s = type.nextLine();	//user types codes
+				s = type.nextLine();	
 				code[i] = s;
 				++i;
-			} while(s.contains("END")); //END 입력 시 종료 
+			} while(s.contains("END")); 	//END 입력 시 종료 input 메소드 종료
 		}
 	}
 
@@ -40,7 +40,7 @@ public class Assembler {
 	
 	class First_Pass {
 		Loader loader = new Loader();
-		private int LC;
+		private int LC;			//명령어의 위치를 추적하기 위한 location counter
 		private boolean bool;
 		private static String Label;
 		
@@ -55,8 +55,8 @@ public class Assembler {
 		}
 		
 
-		void First_Pass() {		//start first pass method
-			loader.input();
+		void First_Pass() {		//퍼스트패스 시작
+			loader.input();		
 
 			LC = 0;		//set LC as 0
 			for(int i=0; i<loader.size; i++){		//사용자가 입력한 코드 수 만큼 반복
