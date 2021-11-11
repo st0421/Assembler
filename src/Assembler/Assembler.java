@@ -1,8 +1,5 @@
-package Assembler;
 
-import java.util.Hashtable;
-import java.util.Scanner;
-
+/* 
 public class Assembler {
 	   public static void main(String[] args) {
 	      instructionCycle cpu = new instructionCycle();
@@ -10,17 +7,46 @@ public class Assembler {
 	   
 	   }
 	}
+*/
+
+package Assembler;
+
+
+import java.util.Hashtable;
+import java.util.Map;
+import java.util.Scanner;
+
+
+public class Assembler {
+	   public static void main(String[] args) {
+
+	      First_Pass pass1 = new First_Pass();
+	      
+	      pass1.input();
+	      pass1.firstpass();
+	      
+	      for (int i=0; i<pass1.size; i++)			//명령어 들어간 배열 출력 테스트 
+	    	  System.out.println(pass1.code[i]);
+	      for (Map.Entry<Integer, String> e : pass1.ht.entrySet()) { System.out.println("Key : " + e.getKey() + ", Value : " + e.getValue()); }
+	      //해시 테이블 출력 테스트인데 출력 안됨. 수정 요함.
+
+	   }
+}
+
 
 /////////////////////////////////////////////////////////////
 
 
 
-	class Loader {
-		/* "사용자가 텔레타이프 상에서 기호 프로그램을 타이핑하면 로더(Loader) 프로그램은 기호 프로그램을 메모리 안으로 입력시킨다." (p.148) */
+
+
+
+/*	class Loader {
+		/* "사용자가 텔레타이프 상에서 기호 프로그램을 타이핑하면 로더(Loader) 프로그램은 기호 프로그램을 메모리 안으로 입력시킨다." (p.148) 
 		Scanner type = new Scanner(System.in);
 		static String s;
 		String[] code = new String[100]; 	//사용자가 입력한 코드 넣을 배열 생성 
-		int size = code.length;
+		int size = code.length;				//size = 코드 라인 수 
 		
 		
 		public void input() {			//사용자의 입력을 받는 input 메소드
@@ -29,19 +55,25 @@ public class Assembler {
 				s = type.nextLine();	
 				code[i] = s;
 				++i;
-			} while(s.contains("END")); 	//END 입력 시 종료 input 메소드 종료
+			} while(!(s.contains("END"))); 	//END 입력 시 종료 input 메소드 종료
 		}
 	}
-
+	
+클래스 따로 만드는 게 여러모로 불편한 것 같아서 그냥 Loader 클래스 없애고 First_Pass 클래스에 input 메소드 넣었습니다*/
 
 	
 	
 	
 	
 	class First_Pass {
-		Loader loader = new Loader();
-		private int LC;			//명령어의 위치를 추적하기 위한 location counter
-		private boolean bool;
+		static Hashtable<Integer, String> ht = new Hashtable<>();
+		Scanner type = new Scanner(System.in);
+		private String s;
+		int size = 10;						//size = 코드 최대 몇 줄?
+		String[] code = new String[size]; 			//code[] = 사용자가 입력한 코드 넣을 배열
+
+		private int LC;						//LC = 명령어의 위치를 추적하기 위한 location counter
+		private boolean bool;					//명령어에 Label이 존재하면 bool = true
 		private static String Label;
 		
 		public int getLC() {
@@ -54,39 +86,49 @@ public class Assembler {
 			this.bool = true;
 		}
 		
+		
+		public void input() {			//사용자의 입력을 받는 input 메소드
+			int i = 0;
+			do {
+				s = type.nextLine();	
+				code[i] = s;
+				++i;
+			} while(!(s.contains("END"))); 	//END 입력 시 종료 input 메소드 종료
+		}
+		
 
-		void First_Pass() {		//퍼스트패스 시작
-			loader.input();		
+		void firstpass() {		//퍼스트패스 루틴 시작
 
-			LC = 0;		//set LC as 0
-			for(int i=0; i<loader.size; i++){		//사용자가 입력한 코드 수 만큼 반복
+			LC = 0;					//set LC as 0
+			for(int i=0; i<this.size; i++){		//배열 원소 개수만큼 반복
 				
-				if(loader.code[LC].contains(",")) {	//라벨 유무 판별 조건문 
-					setBool();						//콤마가 있으면 bool을 true로 설정 
-					Label = loader.code[LC].replaceAll(",*","");	//코드에 있는 라벨 기호를 Label에 저장 
+				if(this.code[LC].contains(",")) {			//라벨 유무 판별 조건문 
+					setBool();					//명령어에 콤마가 있으면 bool을 true로 설정 
+					Label = this.code[LC].replaceAll(",*","");	//코드에 있는 라벨 명령어 기호를 Label에 저장 
 				}
 				
-				if(bool == true) {	//when comma exists
-					HashTable();	//put symbol in the hash table
+				if(bool == true) {					//콤마가 있으면,
+					hashtable();					//hashtable 메소드 호출
 					LC++;
 				}
 				
-				else {	//when comma doesn't exist
-					String code = loader.code[LC];
-					String[] codecut = code.split("\\s");
-					switch (codecut[0]) {
-					case "ORG":
+				else {							//콤마가 없으면(라벨이 없으면), 명령어 필드의 기호를 체크
+					String code = this.code[LC];
+					String[] codecut = code.split("\\s");		//코드를 공백으로 구분하여 split
+					
+					switch (codecut[0]) {				//명령어 필드가 
+					case "ORG":					//ORG이면 
 					{
-						LC = Integer.parseInt(codecut[1]);	//set LC to the number after ORG 
-						continue;
+						LC = Integer.parseInt(codecut[1]);	//LC를 ORG 다음에 오는 숫자로 설정해주고 
+						continue;				//다시 다음 코드 읽어서 라벨 판별
 					}
 						
-					case "END":
-						break;
+					case "END":					//END면 
+						break;					//end first pass and go to second pass
 						
-					default: 
+					default: 					//둘 다 아니면 
 					{
-						LC++; 
+						LC++; 					//LC increment 해주고 다시 다음 코드 읽어서 라벨 판별 
 						continue;
 					}
 					}
@@ -96,23 +138,19 @@ public class Assembler {
 		}
 		
 		
-		private static void HashTable() {		//약식 주소-기호 테이블 제작 메소드 (해시테이블에 라벨 기호와 LC값만 저장)
-			Hashtable<String, Integer> ht = new Hashtable<>();
+		static void hashtable() {		//주소-기호 테이블 제작 메소드(약식) (해시테이블에 라벨 기호와 LC값만 저장)
 			First_Pass fp = new First_Pass();
+			ht.put(fp.getLC(), Label);			//메소드가 호출되면 해시테이블에 라벨 기호와 LC값 넣기 
 			
-			do {
-				ht.put(Label,fp.getLC());
-				if(Label.contains(",")) {
-					ht.put(Label.replaceAll(",*",""),fp.getLC());
-				}
-			}while(Label.contains("END"));
-		}	
+		}
 	}
 	
 	
 	
 
+
 /////////////////////////////////////////////////////////////
+
 
 	class instructionCycle{
 	   private int DR, AR, AC, IR, INPR, OUTPR, TR, SC, indirection, head, I, E, S, D7, INpR, FGI, OUTR, FGO, IEN,HLT;   //각각의 메모리 또는 레지스터
@@ -122,11 +160,13 @@ public class Assembler {
 	   String var[]= {"A","B","C"};
 	   private String symbol,operation;
 
+
 	   instructionCycle(){                
 	      setMemory();
 	      showMemory();
 	   }
 	   
+
 
 	   private void setMemory(){            
 	      M[0] = 0x2004;
@@ -154,21 +194,27 @@ public class Assembler {
 		   }
 	   }
 
+
 	   private String symbolCheck(int a) {                          //instruction 값인지 체크해 심볼을 문자열로 반환하는 메소드
 	      //instruction 값인지 체크해 심볼을 문자열로 반환하는 메소드
+
 
 		 
 	      head = (short) ((short)a / 0x1000) ; 
 	      //16진수의 맨 앞을 얻음 ex) 0x3006 이면 head = 6
 	      D7 = 0;
 
+
 	      indirection = (short) (head / 8); 
 	      //indirect bit 를 얻음 ex) 0~7로 시작하면 0, 8~f로 시작하면 1
 
+
 	      symbol = "";
+
 
 	      String address = Integer.toHexString(a + 0x10000).substring(2);   
 	      //주소값 넣는다.
+
 
 	      if(head == 7){ // 7xxx 
 	         address = "   "; //주소를 없앤다
@@ -267,23 +313,29 @@ public class Assembler {
 	            symbol = "I " + symbol;
 	      }
 
+
 	      return symbol + "  " + address; // symbol + 주소값 반환
 
+
 	   }
+
 
 	 
 	   private void T0(){               // T0 일 때
 	      AR = (short) PC;
 	   }
 
+
 	   private void T1(){              // T1 일 때
 	      IR = M[AR]; PC = (short) (PC + 1);
 	   }
+
 
 	   private void T2(){             //T2 일 때
 	      symbol = symbolCheck(M[AR]);
 	      AR = (short) (IR & 0x0fff); I = indirection;
 	   }
+
 
 	   private void instructionCheck() {  //인스트럭션 체크하고 명령어에 따라 T3, T4, T5 ... 할일 결정
 	       symbol = symbol.substring(0,3);
@@ -335,10 +387,12 @@ public class Assembler {
 	            if(AC == 0)
 	               PC = (short) (PC + 1);
 
+
 	            break;
 	         case "SZE":
 	            if(E == 0)
 	               PC = (short) (PC + 1);
+
 
 	            break;
 	         case "HLT":
@@ -348,19 +402,24 @@ public class Assembler {
 	         }
 	         SC = 0;
 
+
 	      }
 	      else if(head == 0xf){  //D7 = 1 이고, I = 1 인경우
 
+
 	         switch(symbol){
 	         case "INP":
+
 
 	            AC = INPR; FGI = 0;
 	            break;
 	         case "OUT":
 
+
 	            OUTR = (short) (0x00ff & AC); FGO = 0;
 	            break;
 	         case "SKI":
+
 
 	            if(FGI == 1){
 	               PC += 1;
@@ -368,38 +427,48 @@ public class Assembler {
 	            break;
 	         case "SKO":
 
+
 	            if(FGO==1){
 	               PC+=1;
 	            }
 	            break;
 	         case "ION":
 
+
 	            IEN = 1;
 	            break;
 	         case "IOF":
 
+
 	            IEN = 0;
 	            break;
 	         }
+
 
 	      }
 	      else{
 	         if(I == 1)
 	            AR = M[AR];
 
+
 	         switch(symbol){
 	         case "AND":
 
+
 	            DR = M[AR];
+
 
 	            AC = (short) (AC & DR);
 	            SC = 0;
+
 
 	            break;
 	         case "ADD":
 	            int Cout = 0;
 
+
 	            DR = M[AR];
+
 
 	            if(AC < 0 && AC + DR < 0 && DR > 0 || AC > 0 && AC + DR > 0 && DR < 0){ //오버플로우가 일어났을때
 	               Cout = 1;
@@ -408,40 +477,53 @@ public class Assembler {
 	            E = (short) Cout;
 	            SC = 0;
 
+
 	            break;
 	         case "LDA":
 	            DR = M[AR];
 
+
 	            AC = DR;
 	            SC = 0;
+
 
 	            break;
 	         case "STA":
 
+
 	            M[AR] = AC;
 	            SC = 0;
+
 
 	            break;
 	         case "BUN":
 
+
 	            PC = AR;
 	            SC = 0;
+
 
 	            break;
 	         case "BSA":
 
+
 	            M[AR] = PC;
 	            AR = (short) (AR + 1);
+
 
 	            PC = AR;
 	            SC = 0;
 
+
 	            break;
 	         case "ISZ":
 
+
 	            DR = M[AR];
 
+
 	            DR = (short) (DR + 1);
+
 
 	            M[AR] = DR;
 	            if(DR == 0){
@@ -449,9 +531,11 @@ public class Assembler {
 	            }
 	            SC = 0;
 
+
 	         }
 	      }
 	   }
+
 
 	   void printCycle(){//명령어 사이클을 눈에 보이게 프린트 해준다.
 		   int count=h; 
@@ -472,6 +556,7 @@ public class Assembler {
 	            +"AC["+Integer.toHexString(AC + 0x10000).substring(2).toUpperCase() +"],"
 	            +"IR["+Integer.toHexString(IR + 0x10000).substring(2).toUpperCase()+"], "
 	            +"TR["+Integer.toHexString(TR + 0x10000).substring(2).toUpperCase()+"]");
+
 
 	            System.out.println();
 	           
