@@ -14,32 +14,27 @@ package Assembler;
 
 import java.util.Hashtable;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Scanner;
 
 
 public class Assembler {
 	   public static void main(String[] args) {
-
 	      First_Pass pass1 = new First_Pass();
 	      
 	      pass1.input();
 	      pass1.firstpass();
 	      
-	      for (int i=0; i<pass1.size; i++)			//명령어 들어간 배열 출력 테스트 
-	    	  System.out.println(pass1.code[i]);
-	      for (Map.Entry<Integer, String> e : pass1.ht.entrySet()) { System.out.println("Key : " + e.getKey() + ", Value : " + e.getValue()); }
-	      //해시 테이블 출력 테스트인데 출력 안됨. 수정 요함.
-
+	      for (int i=0; i<50; i++) {			//명령어 들어간 배열 출력 테스트 
+	    	  System.out.println("code : "+pass1.code[i]);
+	      }
+	      for ( String key : First_Pass.ht.keySet()) { 
+	    	  System.out.println("Key : " + key + ", Value : " + First_Pass.ht.get(key)); 
+	      }
+	      System.out.println(pass1.ht.get("B"));
+	
 	   }
 }
-
-
-/////////////////////////////////////////////////////////////
-
-
-
-
-
 
 /*	class Loader {
 		/* "사용자가 텔레타이프 상에서 기호 프로그램을 타이핑하면 로더(Loader) 프로그램은 기호 프로그램을 메모리 안으로 입력시킨다." (p.148) 
@@ -61,20 +56,18 @@ public class Assembler {
 	
 클래스 따로 만드는 게 여러모로 불편한 것 같아서 그냥 Loader 클래스 없애고 First_Pass 클래스에 input 메소드 넣었습니다*/
 
-	
-	
-	
-	
+
 	class First_Pass {
-		static Hashtable<Integer, String> ht = new Hashtable<>();
+		static Hashtable<String, Integer> ht = new Hashtable<>();
 		Scanner type = new Scanner(System.in);
 		private String s;
-		int size = 10;						//size = 코드 최대 몇 줄?
+		int size = 100,count=0;						//size = 코드 최대 몇 줄?
+		String[] input = new String[size];
 		String[] code = new String[size]; 			//code[] = 사용자가 입력한 코드 넣을 배열
-
-		private int LC;						//LC = 명령어의 위치를 추적하기 위한 location counter
+		
+		static int LC,seq;						//LC = 명령어의 위치를 추적하기 위한 location counter
 		private boolean bool;					//명령어에 Label이 존재하면 bool = true
-		private static String Label;
+		private static String Value,Label;
 		
 		public int getLC() {
 			return LC;
@@ -91,46 +84,56 @@ public class Assembler {
 			int i = 0;
 			do {
 				s = type.nextLine();	
-				code[i] = s;
-				++i;
+				input[i++] = s;
 			} while(!(s.contains("END"))); 	//END 입력 시 종료 input 메소드 종료
+			
+
 		}
 		
 
 		void firstpass() {		//퍼스트패스 루틴 시작
-
+			
 			LC = 0;					//set LC as 0
-			for(int i=0; i<this.size; i++){		//배열 원소 개수만큼 반복
+			seq=0;
+			for(int i=0; i<100; i++){		//배열 원소 개수만큼 반복
+				if(this.input[i]==null)
+					continue;
 				
-				if(this.code[LC].contains(",")) {			//라벨 유무 판별 조건문 
+				if(this.input[seq].contains(",")) {			//라벨 유무 판별 조건문 
 					setBool();					//명령어에 콤마가 있으면 bool을 true로 설정 
-					Label = this.code[LC].replaceAll(",*","");	//코드에 있는 라벨 명령어 기호를 Label에 저장 
+					int idx = this.input[seq].indexOf(",");
+					Label = this.input[seq].substring(0,idx);	//코드에 있는 라벨 명령어 기호를 Label에 저장 
+					Value = this.input[seq].substring(idx+2);
+			
 				}
 				
 				if(bool == true) {					//콤마가 있으면,
-					hashtable();					//hashtable 메소드 호출
-					LC++;
+					hashtable(Label, LC);					//hashtable 메소드 호출
+					this.code[LC++]=Value;
+					seq++;
+					bool=false;
 				}
 				
 				else {							//콤마가 없으면(라벨이 없으면), 명령어 필드의 기호를 체크
-					String code = this.code[LC];
+					String code = this.input[seq];
 					String[] codecut = code.split("\\s");		//코드를 공백으로 구분하여 split
-					
+				
 					switch (codecut[0]) {				//명령어 필드가 
 					case "ORG":					//ORG이면 
 					{
 						LC = Integer.parseInt(codecut[1]);	//LC를 ORG 다음에 오는 숫자로 설정해주고 
-						continue;				//다시 다음 코드 읽어서 라벨 판별
+						seq++;
+						continue;
 					}
-						
+					default: 					//둘 다 아니면 
+					{
+						this.code[LC++]=input[seq++];
+						 					//LC increment 해주고 다시 다음 코드 읽어서 라벨 판별 
+						continue;		//다시 다음 코드 읽어서 라벨 판별
+					}
 					case "END":					//END면 
 						break;					//end first pass and go to second pass
 						
-					default: 					//둘 다 아니면 
-					{
-						LC++; 					//LC increment 해주고 다시 다음 코드 읽어서 라벨 판별 
-						continue;
-					}
 					}
 					break;
 				}
@@ -138,9 +141,8 @@ public class Assembler {
 		}
 		
 		
-		static void hashtable() {		//주소-기호 테이블 제작 메소드(약식) (해시테이블에 라벨 기호와 LC값만 저장)
-			First_Pass fp = new First_Pass();
-			ht.put(fp.getLC(), Label);			//메소드가 호출되면 해시테이블에 라벨 기호와 LC값 넣기 
+		static void hashtable(String key,int value) {		//주소-기호 테이블 제작 메소드(약식) (해시테이블에 라벨 기호와 LC값만 저장)
+			ht.put(key, value);			//메소드가 호출되면 해시테이블에 라벨 기호와 LC값 넣기 
 			
 		}
 	}
@@ -168,7 +170,8 @@ public class Assembler {
 	   
 
 
-	   private void setMemory(){            
+	   private void setMemory(){        
+		   
 	      M[0] = 0x2004;
 	      M[1] = 0x1005;
 	      M[2] = 0x3006;
