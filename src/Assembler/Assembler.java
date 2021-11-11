@@ -1,4 +1,7 @@
 package Assembler;
+
+import java.util.Scanner;
+
 public class Assembler {
 	   public static void main(String[] args) {
 	      instructionCycle cpu = new instructionCycle();
