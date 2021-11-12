@@ -2,8 +2,7 @@
 /* 
 public class Assembler {
 	   public static void main(String[] args) {
-	      instructionCycle cpu = new instructionCycle();
-	      cpu.printCycle();
+
 	   
 	   }
 	}
@@ -19,6 +18,7 @@ import java.util.Scanner;
 
 
 public class Assembler {
+	
 	   public static void main(String[] args) {
 	      First_Pass pass1 = new First_Pass();
 	      
@@ -32,7 +32,12 @@ public class Assembler {
 	    	  System.out.println("Key : " + key + ", Value : " + First_Pass.ht.get(key)); 
 	      }
 	      System.out.println(pass1.ht.get("B"));
-	
+	      transfer trans = new transfer(pass1.code,pass1.startpoint,pass1.LC);
+	      for (int i=0; i<150; i++) {			//명령어 들어간 배열 출력 테스트 
+	    	  System.out.println("plz : "+Integer.toHexString(trans.M_temp[i]));
+	      }
+	      instructionCycle cpu = new instructionCycle(trans.M_temp);
+	      cpu.printCycle();
 	   }
 }
 
@@ -60,14 +65,14 @@ public class Assembler {
 	class First_Pass {
 		static Hashtable<String, Integer> ht = new Hashtable<>();
 		Scanner type = new Scanner(System.in);
-		private String s;
-		int size = 100,count=0;						//size = 코드 최대 몇 줄?
+		private String s;		
 		String[] input = new String[size];
 		String[] code = new String[size]; 			//code[] = 사용자가 입력한 코드 넣을 배열
 		
-		static int LC,seq;						//LC = 명령어의 위치를 추적하기 위한 location counter
-		private boolean bool;					//명령어에 Label이 존재하면 bool = true
-		private static String Value,Label;
+		static int startpoint,LC,seq,hlt_pos, size = 500,length=0; //size = 코드 최대 몇 줄?
+		//LC = 명령어의 위치를 추적하기 위한 location counter
+		boolean bool;					//명령어에 Label이 존재하면 bool = true
+		static String Value,Label;
 		
 		public int getLC() {
 			return LC;
@@ -81,10 +86,9 @@ public class Assembler {
 		
 		
 		public void input() {			//사용자의 입력을 받는 input 메소드
-			int i = 0;
 			do {
 				s = type.nextLine();	
-				input[i++] = s;
+				input[length++] = s;
 			} while(!(s.contains("END"))); 	//END 입력 시 종료 input 메소드 종료
 			
 
@@ -92,8 +96,7 @@ public class Assembler {
 		
 
 		void firstpass() {		//퍼스트패스 루틴 시작
-			
-			LC = 0;					//set LC as 0
+			startpoint=LC = 0;					//set LC as 0
 			seq=0;
 			for(int i=0; i<100; i++){		//배열 원소 개수만큼 반복
 				if(this.input[i]==null)
@@ -122,6 +125,7 @@ public class Assembler {
 					case "ORG":					//ORG이면 
 					{
 						LC = Integer.parseInt(codecut[1]);	//LC를 ORG 다음에 오는 숫자로 설정해주고 
+						startpoint= LC;
 						seq++;
 						continue;
 					}
@@ -146,47 +150,210 @@ public class Assembler {
 			
 		}
 	}
+
 	
 	
+	class transfer{
+		static int dec_hex=0,I=0;
+		int[] M_temp = new int[500];
+		transfer(){
+		}
+		transfer(String[] code,int sp,int ep){
+			int idx,lc,idx2,check_I,result_op,result_adr,trans=0;
+			
+			String symbol,operand;
+			lc = sp;
+			while(lc<ep) {
+				I=0;
+				idx= code[lc].indexOf(" ");
+				symbol = code[lc].substring(0,idx);	//코드에 있는 라벨 명령어 기호를 Label에 저장 
+				operand = code[lc].substring(idx+1);
+				idx2= operand.indexOf(" ");
+				if(idx2!=-1) {
+					if(operand.substring(idx2)=="I") {
+						I=1;
+						operand= operand.substring(0,idx2);
+					}
+				}
+				//symbol check
+				result_op = trans_op(symbol);
+				
+				//operand check
+				result_adr = trans_adr(operand);
+				trans = result_op+result_adr;  //7020
+				lc++;
+				M_temp[sp++]=trans;
+				
+			}
+		}
+		static int trans_op(String a) {    //1.슈도 명령어 16진수 반환메소드
+	        int op = 0;
+	        switch(a) {
+	        case "DEC":
+	           dec_hex=0;     //주소값을 10진수로 반환해준다. 반환 받은 후 출력시 0을 채운 4자리 수로 표현해야함.
+	           break;
+	        case "HEX":
+	           dec_hex=1;       //주소값을 그대로 반환 . 마찬가지로 4자리.
+	           break;
+	           					  //2. MRI 명령어 16진수 반환메소드
+	        case "AND":
+	           op = 0*16*16*16;
+	           if(I==1)
+	        	   op=8;
+	           break;
+	        case "ADD":
+	           op = 1*16*16*16;
+	           if(I==1)
+	        	   op=9*16*16*16;
+	           break;
+	        case "LDA":
+	           op = 2*16*16*16;
+	           if(I==1)
+	        	   op=10*16*16*16;
+	           break;
+	        case "STA":
+	           op = 3*16*16*16;
+	           if(I==1)
+	        	   op=11*16*16*16;
+	           break;
+	        case "BUN":
+	           op = 4*16*16*16;
+	           if(I==1)
+	        	   op=12*16*16*16;
+	           break;
+	        case "BSA":
+	           op = 5*16*16*16; 
+	           if(I==1)
+	        	   op=13*16*16*16;
+	           break;
+	        case "ISZ":
+	           op = 6*16*16*16;
+	           if(I==1)
+	        	   op=14*16*16*16;
+	           break;
+	        
+	       
+	          //3. non - MRI 명령어 16진수 반환메소드
+	        case "CLA":
+	           op = 0x7800;
+	           break;
+	        case "CLE":
+	           op = 0x7400;
+	           break;
+	        case "CMA":
+	           op = 0x7200;
+	           break;
+	        case "CME":
+	           op = 0x7100;
+	           break;
+	        case "CIR":
+	           op = 0x7080;
+	           break;
+	        case "CIL":
+	           op = 0x7040;
+	           break;
+	        case "INC":
+	           op = 0x7020;
+	           break;
+	        case "CPA":
+	           op = 0x7010;
+	           break;
+	        case "SNA":
+	           op = 0x7008;
+	           break;
+	        case "SZA":
+	           op = 0x7004;
+	           break;
+	        case "SZE":
+	           op = 0x7002;
+	           break;
+	        case "HLT":
+	           op = 0x7001;
+	           break;
+	        case "INP":
+	           op = 0xF800;
+	           break;
+	        case "OUT":
+	           op = 0xF400;
+	           break;
+	        case "SKI":
+	           op = 0xF200;
+	           break;
+	        case "SKO":
+	           op = 0xF100;
+	           break;
+	        case "ION":
+	           op = 0xF080;
+	           break;
+	        case "IOF":
+	           op = 0xF040;
+	           break;
+	        }
+	        return op;
+	     }
+		static int trans_adr(String b) {
+			System.out.println("여기까지 잘 도착"+b);
+			for (Entry<String,Integer > entry : First_Pass.ht.entrySet()) {
+			    System.out.println("[Key]:" + entry.getKey() + " [Value]:" + entry.getValue());
+			}
+			int adr=0;
+			System.out.println(First_Pass.ht.containsKey(b));
+			if(First_Pass.ht.containsKey(b)) {
+				adr = First_Pass.ht.get(b);
+			}
+			/*
+			else if (~~~~~~~~~~) {
+				//정수
+				if(dec_hex==1)
+				   b(123)
+				   b/100*16*16+b~~
+			}
+			*/
+			else {
+				adr=0;
+				//피연산자없는거
+			}
+			
+			
+			return adr;
+			
+		}
+		
+	}
 	
-
-
-/////////////////////////////////////////////////////////////
-
-
+	
 	class instructionCycle{
 	   private int DR, AR, AC, IR, INPR, OUTPR, TR, SC, indirection, head, I, E, S, D7, INpR, FGI, OUTR, FGO, IEN,HLT;   //각각의 메모리 또는 레지스터
 	   int h,END; //h는 HLT의 LC. END는 마지막 LC
 	   int PC = 0;         //프로그램 카운터
-	   private int[] M = new int[5000];
+	   int[] M = new int[5000];
 	   String var[]= {"A","B","C"};
 	   private String symbol,operation;
 
 
 	   instructionCycle(){                
-	      setMemory();
-	      showMemory();
+	    //  setMemory();
+	    //  
 	   }
-	   
-
-
+	   instructionCycle(int m[]){                
+		    this.M=m;
+		    showMemory();
+		   }
 	   private void setMemory(){        
-		   
+		  
+		  
+		/*
 	      M[0] = 0x2004;
 	      M[1] = 0x1005;
 	      M[2] = 0x3006;
-	      M[3] = 0x7001;
+	      M[3] = 0x7001;  M[3] = 28673;  28673 Integer.toHexStirng 7001
 	      M[4] = 0x0053;
 	      M[5] = 0xffe9;
 	      M[6] = 0x0000;
 	      h=3;
 	      END=6;
-	      /*
-	      String[] var = new String[END-h];
-	      String example[]= {"A","B","C"};
-	      for(int i=0;i<var.length;i++) {
-	    	  var[i]=example[i];
-	      }*/
+	     */
+
 	      
 	   }
 	   
@@ -574,4 +741,4 @@ public class Assembler {
 	   			System.out.print("M["+i+"] : "+Integer.toHexString(M[i]+ 0x10000).substring(1).toUpperCase()+"\t");
 	   		}
 	   }
-	} 
+	}
