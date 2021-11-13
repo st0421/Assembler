@@ -20,120 +20,82 @@ import java.util.Scanner;
 public class Assembler {
 	
 	   public static void main(String[] args) {
-	      First_Pass pass1 = new First_Pass();
+	      First_Pass pass1 = new First_Pass();  //FirstPass
 	      
 	      pass1.input();
 	      pass1.firstpass();
 	      
-	      for (int i=0; i<50; i++) {			//명령어 들어간 배열 출력 테스트 
-	    	  System.out.println("code : "+pass1.code[i]);
-	      }
-	      for ( String key : First_Pass.ht.keySet()) { 
-	    	  System.out.println("Key : " + key + ", Value : " + First_Pass.ht.get(key)); 
-	      }
-	      System.out.println(pass1.ht.get("B"));
 	      transfer trans = new transfer(pass1.code,pass1.startpoint,pass1.LC);
-	      for (int i=0; i<150; i++) {			//명령어 들어간 배열 출력 테스트 
-	    	  System.out.println("plz : "+Integer.toHexString(trans.M_temp[i]));
-	      }
+	     
 	      instructionCycle cpu = new instructionCycle(trans.M_temp);
 	      cpu.printCycle();
 	   }
 }
 
-/*	class Loader {
-		/* "사용자가 텔레타이프 상에서 기호 프로그램을 타이핑하면 로더(Loader) 프로그램은 기호 프로그램을 메모리 안으로 입력시킨다." (p.148) 
-		Scanner type = new Scanner(System.in);
-		static String s;
-		String[] code = new String[100]; 	//사용자가 입력한 코드 넣을 배열 생성 
-		int size = code.length;				//size = 코드 라인 수 
-		
-		
-		public void input() {			//사용자의 입력을 받는 input 메소드
-			int i = 0;
-			do {
-				s = type.nextLine();	
-				code[i] = s;
-				++i;
-			} while(!(s.contains("END"))); 	//END 입력 시 종료 input 메소드 종료
-		}
-	}
-	
-클래스 따로 만드는 게 여러모로 불편한 것 같아서 그냥 Loader 클래스 없애고 First_Pass 클래스에 input 메소드 넣었습니다*/
-
-
 	class First_Pass {
-		static Hashtable<String, Integer> ht = new Hashtable<>();
+		static Hashtable<String, Integer> ht = new Hashtable<>(); //라벨명과 라벨 유효주소를 저장하기위한 해시테이블
 		Scanner type = new Scanner(System.in);
 		private String s;		
-		String[] input = new String[size];
-		String[] code = new String[size]; 			//code[] = 사용자가 입력한 코드 넣을 배열
+		String[] input = new String[size];			//input[] = 사용자가 입력한 코드 넣을 배열 
+		String[] code = new String[size]; 			//code[] = ORG로 이동하여 인덱스(LC)에 맞춰서 값을 넣은 배열( LC에 맞춰서 인덱스 이동 후 input에 넣은 값 중 라벨을 제외하고 저장)
 		
-		static int startpoint,LC,seq,hlt_pos, size = 500,length=0; //size = 코드 최대 몇 줄?
+		static int startpoint,LC,seq, size = 5000; 
+		//startpoint = transfer 클래스에 ORG값(저장시작하는 인덱스(LC))을 전달해주기위함
 		//LC = 명령어의 위치를 추적하기 위한 location counter
+		//seq = code[LC]에 무사히 값 전달하도록하는 counter   (input[seq])
+		//size = 배열크기(메모리)
+
 		boolean bool;					//명령어에 Label이 존재하면 bool = true
-		static String Value,Label;
-		
-		public int getLC() {
-			return LC;
-		}
-		public boolean getBool() {
-			return bool;
-		}
-		public void setBool() {
-			this.bool = true;
-		}
-		
-		
+		static String Value,Label;		//Label = opcode||Label||HEX||DEC. Value = operand 
+
+		int length=0;
 		public void input() {			//사용자의 입력을 받는 input 메소드
 			do {
 				s = type.nextLine();	
 				input[length++] = s;
 			} while(!(s.contains("END"))); 	//END 입력 시 종료 input 메소드 종료
-			
-
 		}
 		
 
 		void firstpass() {		//퍼스트패스 루틴 시작
-			startpoint=LC = 0;					//set LC as 0
-			seq=0;
-			for(int i=0; i<100; i++){		//배열 원소 개수만큼 반복
+			startpoint=LC = 0;				//set LC as 0,  startpoint = transfer 클래스에 ORG값(저장시작하는 인덱스(LC))을 전달해주기위함
+			seq=0; 							//seq = code[LC]에 무사히 값 전달하도록하는 counter   (input[seq])
+			for(int i=0; i<length; i++){		//배열 원소 개수만큼 반복
 				if(this.input[i]==null)
 					continue;
 				
 				if(this.input[seq].contains(",")) {			//라벨 유무 판별 조건문 
-					setBool();					//명령어에 콤마가 있으면 bool을 true로 설정 
-					int idx = this.input[seq].indexOf(",");
+					bool = true;				//명령어에 콤마가 있으면 bool을 true로 설정 
+					int idx = this.input[seq].indexOf(","); 	//,기준으로 나누기위해 ,의 인덱스 따로 저장
 					Label = this.input[seq].substring(0,idx);	//코드에 있는 라벨 명령어 기호를 Label에 저장 
-					Value = this.input[seq].substring(idx+2);
+					Value = this.input[seq].substring(idx+2);	//라벨의 operand저장 
 			
 				}
 				
 				if(bool == true) {					//콤마가 있으면,
-					hashtable(Label, LC);					//hashtable 메소드 호출
-					this.code[LC++]=Value;
-					seq++;
-					bool=false;
+					hashtable(Label, LC);			//hashtable 메소드 호출 key=라벨, Value=LC(해당라벨 유효주소)
+					this.code[LC++]=Value;			//위에서 저장한 유효주소에 라벨의 값 저장
+					seq++;							//다음으로 이동
+					bool=false;						//bool초기화
 				}
 				
-				else {							//콤마가 없으면(라벨이 없으면), 명령어 필드의 기호를 체크
-					String code = this.input[seq];
-					String[] codecut = code.split("\\s");		//코드를 공백으로 구분하여 split
+				else {								 	 //콤마가 없으면(라벨이 없으면), 명령어 필드의 기호를 체크
+					String code = this.input[seq]; 		 //일단 저장한 문자열 가져옴 (ex- ORG 100, LDA Y .._
+					String[] codecut = code.split("\\s");//코드를 공백으로 구분하여 split
 				
-					switch (codecut[0]) {				//명령어 필드가 
+					switch (codecut[0]) {				//명령어 필드 (opcode) 
 					case "ORG":					//ORG이면 
 					{
 						LC = Integer.parseInt(codecut[1]);	//LC를 ORG 다음에 오는 숫자로 설정해주고 
-						startpoint= LC;
+						startpoint= LC; 					//다른 클래스에 전달하기위해 starpoint 설정(ORG로 지정한 LC 시작값)
 						seq++;
 						continue;
 					}
-					default: 					//둘 다 아니면 
+					default: 								//ORG가 아니면 
 					{
-						this.code[LC++]=input[seq++];
-						 					//LC increment 해주고 다시 다음 코드 읽어서 라벨 판별 
-						continue;		//다시 다음 코드 읽어서 라벨 판별
+						this.code[LC++]=input[seq++];   //instruction 저장
+						 								//LC increment
+						continue;
 					}
 					case "END":					//END면 
 						break;					//end first pass and go to second pass
@@ -143,8 +105,6 @@ public class Assembler {
 				}
 			}
 		}
-		
-		
 		static void hashtable(String key,int value) {		//주소-기호 테이블 제작 메소드(약식) (해시테이블에 라벨 기호와 LC값만 저장)
 			ht.put(key, value);			//메소드가 호출되면 해시테이블에 라벨 기호와 LC값 넣기 
 			
@@ -153,36 +113,63 @@ public class Assembler {
 
 	
 	
-	class transfer{
-		static int dec_hex=0,I=0;
-		int[] M_temp = new int[500];
+	class transfer{ 										//입력한 배열의 문자열값 16진수로 바꾸기
+		static int dec_hex=0,I=0,ORG=0,HLT=0,END=0,No_op=0;
+		//dec_hex 10진수인지 16진수인지 판별
+		//I==0(direct),1(indirect) 
+		//ORG = 배열 시작 인덱스 HLT = HLT값의 인덱스, END = 유효한 값이 있는 인덱스의 끝. No_op = 레지스터명령, I/O명령과같이 operand가 없는 명령 확인
+		int[] M_temp = new int[5000];
 		transfer(){
 		}
-		transfer(String[] code,int sp,int ep){
-			int idx,lc,idx2,check_I,result_op,result_adr,trans=0;
-			
-			String symbol,operand;
-			lc = sp;
-			while(lc<ep) {
-				I=0;
-				idx= code[lc].indexOf(" ");
-				symbol = code[lc].substring(0,idx);	//코드에 있는 라벨 명령어 기호를 Label에 저장 
-				operand = code[lc].substring(idx+1);
-				idx2= operand.indexOf(" ");
-				if(idx2!=-1) {
-					if(operand.substring(idx2)=="I") {
-						I=1;
-						operand= operand.substring(0,idx2);
+		transfer(String[] code,int sp,int ep){   					//입력한 문자열배열, 시작 인덱스, 끝 인덱스 받아옴
+			int idx,lc,idx2,result_op,result_adr,trans=0;	
+			//idx,idx2 = 문자열을 나누는 기준
+			//lc = 반복문 돌리기위한 counter (code[] -> M_temp[])
+			//result_op,adr = idx로 opcode, operand 나눈 값들
+			//trans = result_op,adr 합쳐서 4자리 16진수로 만듬. -> M_temp[]에 넣기위함
+			String symbol=" ",operand=" ";
+			lc =ORG= sp; // (ex - ORG 100입력시 sp==100 )ORG는 instructionCycle클래스에 보내기 위함 
+			END=ep;		 //  END도 동일 
+			while(lc<ep) {		//배열 중 값이 들어있는 부분만 반복문 진행
+				I=0;			//direct로 일단 초기화
+				idx= code[lc].indexOf(" ");			 //공백의 인덱스를 가져와서 그 인덱스르 기준으로 나눔. 
+				if(idx==-1) { 						 //해당 문자열 없으면 -1 리턴 명령어 3자리만 따옴
+					symbol=code[lc].substring(0,3);
+					No_op=1;						 //초기화
+				}
+				else {
+				symbol = code[lc].substring(0,idx);	 //코드에 있는 라벨 명령어 기호 저장 
+				}
+				if(symbol.equals("HLT")) {
+					HLT=lc;					//HLT의 인덱스 따로 저장(instructionCycle에서 변수관리를 위함)
+				}
+
+				
+				//피연산자부분 가져오기
+				if(No_op==0) {
+					operand = code[lc].substring(idx+1);
+					idx2= operand.indexOf(" ");
+					if(idx2!=-1) {
+						if(operand.substring(idx2)=="I") {
+							I=1;
+							operand= operand.substring(0,idx2);
+						}
 					}
 				}
+				else {
+					operand = " ";
+					No_op=0;
+				}
+
+				
 				//symbol check
-				result_op = trans_op(symbol);
+				result_op = trans_op(symbol); // 명령어 symbol 16진수 변환
 				
 				//operand check
-				result_adr = trans_adr(operand);
+				result_adr = trans_adr(operand);  //operand 16진수변환
 				trans = result_op+result_adr;  //7020
 				lc++;
-				M_temp[sp++]=trans;
+				M_temp[sp++]=trans; //16진수로 변환한 배열
 				
 			}
 		}
@@ -190,13 +177,13 @@ public class Assembler {
 	        int op = 0;
 	        switch(a) {
 	        case "DEC":
-	           dec_hex=0;     //주소값을 10진수로 반환해준다. 반환 받은 후 출력시 0을 채운 4자리 수로 표현해야함.
+	           dec_hex=0;     // 상수가 16진수인지 10진수 인지 체크
 	           break;
 	        case "HEX":
-	           dec_hex=1;       //주소값을 그대로 반환 . 마찬가지로 4자리.
+	           dec_hex=1;       
 	           break;
-	           					  //2. MRI 명령어 16진수 반환메소드
-	        case "AND":
+	           					 	
+	        case "AND":				//메모리참조연산은 4번째자리 숫자먼저 구함
 	           op = 0*16*16*16;
 	           if(I==1)
 	        	   op=8;
@@ -291,31 +278,28 @@ public class Assembler {
 	        }
 	        return op;
 	     }
-		static int trans_adr(String b) {
-			System.out.println("여기까지 잘 도착"+b);
-			for (Entry<String,Integer > entry : First_Pass.ht.entrySet()) {
-			    System.out.println("[Key]:" + entry.getKey() + " [Value]:" + entry.getValue());
-			}
+		
+		static int trans_adr(String b) {	//operand에 라벨이 들어있는 경우
 			int adr=0;
-			System.out.println(First_Pass.ht.containsKey(b));
-			if(First_Pass.ht.containsKey(b)) {
-				adr = First_Pass.ht.get(b);
+			if(First_Pass.ht.containsKey(b)) {  //hashtable에 해당 라벨이 있으면 
+				adr = First_Pass.ht.get(b);		//그 라벨의 유효주소 가져옴
 			}
-			/*
-			else if (~~~~~~~~~~) {
-				//정수
-				if(dec_hex==1)
-				   b(123)
-				   b/100*16*16+b~~
-			}
-			*/
-			else {
+			
+			else if (b==" ") {				//Non-MRI
 				adr=0;
 				//피연산자없는거
 			}
 			
+			else { 							//상수			
+	            if (dec_hex==0) 
+	                adr = Integer.parseInt(b);
+	            else{
+	                adr = Integer.parseInt(b,16);    
+	                }
+			}
 			
-			return adr;
+			
+			return adr;		//operand출력
 			
 		}
 		
@@ -325,41 +309,27 @@ public class Assembler {
 	class instructionCycle{
 	   private int DR, AR, AC, IR, INPR, OUTPR, TR, SC, indirection, head, I, E, S, D7, INpR, FGI, OUTR, FGO, IEN,HLT;   //각각의 메모리 또는 레지스터
 	   int h,END; //h는 HLT의 LC. END는 마지막 LC
-	   int PC = 0;         //프로그램 카운터
+	   int PC = transfer.ORG,var_num=transfer.END-transfer.HLT-1,ti=0;         //프로그램 카운터
 	   int[] M = new int[5000];
-	   String var[]= {"A","B","C"};
+	   String var[]=  new String[var_num];
+
 	   private String symbol,operation;
 
 
 	   instructionCycle(){                
-	    //  setMemory();
-	    //  
 	   }
 	   instructionCycle(int m[]){                
 		    this.M=m;
+			for(String key : First_Pass.ht.keySet()){ 
+				var[ti++] = key;
+			}
 		    showMemory();
 		   }
-	   private void setMemory(){        
-		  
-		  
-		/*
-	      M[0] = 0x2004;
-	      M[1] = 0x1005;
-	      M[2] = 0x3006;
-	      M[3] = 0x7001;  M[3] = 28673;  28673 Integer.toHexStirng 7001
-	      M[4] = 0x0053;
-	      M[5] = 0xffe9;
-	      M[6] = 0x0000;
-	      h=3;
-	      END=6;
-	     */
 
-	      
-	   }
 	   
 	   private void showMemory() {
 		   System.out.println("Location\tInstruction");
-		   for(int i=0;i<7;i++) {
+		   for(int i=transfer.ORG;i<transfer.END-1;i++) {
 			   System.out.println("  "+i+"\t\t "+Integer.toHexString(M[i]+0x100000).substring(2).toUpperCase());
 		   }
 	   }
@@ -708,11 +678,12 @@ public class Assembler {
 
 
 	   void printCycle(){//명령어 사이클을 눈에 보이게 프린트 해준다.
-		   int count=h; 
-		   while(count>=0){
+		   int count=transfer.HLT; 
+		   //연산과정 출
+		   while(count>=transfer.ORG){
 			    System.out.println();
 	            System.out.println("-- Location : " 
-	            + Integer.toHexString(PC) );
+	            +PC );
 	            System.out.println("01.입력 = "+Integer.toHexString(M[PC]+0x100000).substring(2).toUpperCase());
 	            T0();
 	            T1();
@@ -732,12 +703,14 @@ public class Assembler {
 	           
 	            count= count-1;
 	       }
-	   		System.out.println();
-	   		for(int i=0;i<END-h;i++) { //h는 HLT의 LC. END는 메모리 마지막.
-	   		System.out.print(var[i]+" : "+(short)M[h+1+i]+",\t");
+		   //hashtable key-value 출력부
+	   		for(int i=0;i<var_num;i++) { 
+	   		System.out.print(var[i]+" : "+(short)M[transfer.HLT+1+i]+"\t");
 	   		}
 	   		System.out.println();
-	   		for(int i=0;i<=END;i++) {
+	   		
+	   		//현재 메모리 상태 출력
+	   		for(int i=transfer.ORG;i<transfer.END;i++) {
 	   			System.out.print("M["+i+"] : "+Integer.toHexString(M[i]+ 0x10000).substring(1).toUpperCase()+"\t");
 	   		}
 	   }
