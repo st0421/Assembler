@@ -407,16 +407,10 @@ public class Assembler {
 	   }
 
 	 
-	   private void T0(){               // T0 일 때
-	      AR = (short) PC;
-	   }
-
-	   private void T1(){              // T1 일 때
-	      IR = M[AR]; PC = (short) (PC + 1);
-	   }
-
-	   private void T2(){             //T2 일 때
-	      symbol = symbolCheck(M[AR]);
+	   private void Fetch_Decode(){             		
+	      AR = (short) PC;								// T0
+	      IR = M[AR]; PC = (short) (PC + 1);  			// T1
+	      symbol = symbolCheck(M[AR]);  				// T2
 	      AR = (short) (IR & 0x0fff); I = indirection;
 	   }
 
@@ -555,9 +549,7 @@ public class Assembler {
 	            System.out.println("-- Location : " 
 	            +Integer.toHexString(PC).toUpperCase() );
 	            System.out.println("01.입력 = "+Integer.toHexString(M[PC]+0x100000).substring(2).toUpperCase());
-	            T0();
-	            T1();
-	            T2();
+	            Fetch_Decode();
 	            instructionCheck();
 	            System.out.println("02.명령어 형식 = "+operation);
 	            System.out.println("03.Symbol ="+symbol.toUpperCase());
