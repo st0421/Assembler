@@ -287,7 +287,7 @@ public class Assembler {
 	   instructionCycle(){ }
 	   instructionCycle(int m[]){                
 		    this.M=m;
-		    showMemory();
+		    //showMemory();
 		   }
 
 	   private void showMemory() {
@@ -587,10 +587,9 @@ public class Assembler {
 	   		
 	   		//현재 메모리 상태 출력
 
-	   		for(int i=transfer.ORG;i<=transfer.END;i++) {
-	   			if(M[i]==0)
-	   				continue;
-	   			System.out.print("M["+Integer.toHexString(i)+"] : "+Integer.toHexString(M[i]+ 0x110000).substring(2).toUpperCase()+"\t");
+	   		for(int i=transfer.ORG,five=1;i<=transfer.END;i++,five++) {
+	   			System.out.print("M["+Integer.toHexString(i).toUpperCase()+"] : "+Integer.toHexString(M[i]+ 0x110000).substring(2).toUpperCase()+"\t");
+	   			if(five%5==0) System.out.println();
 	   		}
 	   }
 	}
