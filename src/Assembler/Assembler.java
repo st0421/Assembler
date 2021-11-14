@@ -688,9 +688,7 @@ public class Assembler {
 	            System.out.println();
 	           if(symbol.toUpperCase().equals("HLT"))
 	        	   break;
-	            
 	       }
-
 		   //hashtable key-value 출력부
 	   		for(int i=0;i<var_num;i++) { 
 
