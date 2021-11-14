@@ -6,7 +6,6 @@ import java.util.Map.Entry;
 import java.util.Scanner;
 import java.util.Set;
 
-
 public class Assembler {
 	
 	   public static void main(String[] args) {
@@ -86,12 +85,10 @@ public class Assembler {
 					default: 								//ORG가 아니면 
 					{
 						this.code[LC++]=input[seq++];   //instruction 저장
-
 						continue;
 					}
 					case "END":					//END면 
-						break;					//end first pass and go to second pass
-						
+						break;					//end first pass and go to second pass	
 					}
 					break;
 				}
@@ -99,11 +96,8 @@ public class Assembler {
 		}
 		static void hashtable(String key,int value) {		//주소-기호 테이블 제작 메소드(약식) (해시테이블에 라벨 기호와 LC값만 저장)
 			ht.put(key, value);			//메소드가 호출되면 해시테이블에 라벨 기호와 LC값 넣기 
-			
 		}
-	}
-
-	
+	}	
 	
 	class transfer{ 										//입력한 배열의 문자열값 16진수로 바꾸기
 		static int dec_hex=0,I=0,ORG=0,HLT=0,END=0,No_op=0;
@@ -111,7 +105,6 @@ public class Assembler {
 		//I==0(direct),1(indirect) 
 		//ORG = 배열 시작 인덱스 HLT = HLT값의 인덱스, END = 유효한 값이 있는 인덱스의 끝. No_op = 레지스터명령, I/O명령과같이 operand가 없는 명령 확인
 		int[] M_temp = new int[5000];
-
 		transfer(String[] code,int sp,int ep){   					//입력한 문자열배열, 시작 인덱스, 끝 인덱스 받아옴
 			int idx,lc,idx2,result_op,result_adr,trans=0;	
 			//idx,idx2 = 문자열을 나누는 기준
@@ -137,9 +130,7 @@ public class Assembler {
 				}
 				if(symbol.equals("HLT")) {
 					HLT=lc;					//HLT의 인덱스 따로 저장(instructionCycle에서 변수관리를 위함)
-				}
-
-				
+				}			
 				//피연산자부분 가져오기
 				if(No_op==0) {
 					operand = code[lc].substring(idx+1);
@@ -154,12 +145,9 @@ public class Assembler {
 				else {
 					operand = " ";
 					No_op=0;
-				}
-
-				
+				}				
 				//symbol check
-				result_op = trans_op(symbol); // 명령어 symbol 16진수 변환
-				
+				result_op = trans_op(symbol); // 명령어 symbol 16진수 변환				
 				//operand check
 				result_adr = trans_adr(operand,code);  //operand 16진수변환
 				trans = result_op+result_adr;  //7020
@@ -174,8 +162,7 @@ public class Assembler {
 	           break;
 	        case "HEX":
 	           dec_hex=1;       
-	           break;
-	           					 	
+	           break;	           					 	
 	        case "AND":				//메모리참조연산은 4번째자리 숫자먼저 구함
 	           op = 0*16*16*16;
 	           if(I==1)
@@ -211,8 +198,7 @@ public class Assembler {
 	           if(I==1)
 	        	   op=14*16*16*16;
 	           break;
-	        
-	       
+	        	       
 	          //3. non - MRI 명령어 16진수 반환메소드
 	        case "CLA":
 	           op = 0x7800;
@@ -270,33 +256,25 @@ public class Assembler {
 	           break;
 	        }
 	        return op;
-	     }
-		
+	     }		
 		static int trans_adr(String b,String[] code) {	//operand에 라벨이 들어있는 경우
 			int adr=0;
 			if(First_Pass.ht.containsKey(b)) {  //hashtable에 해당 라벨이 있으면 
 				adr = First_Pass.ht.get(b);		//그 라벨의 유효주소 가져옴
 			}
-				
 			else if (b==" ") {				//Non-MRI
 				adr=0;
-				//피연산자없는거
 			}
-			
 			else { 							//상수			
-		        if (dec_hex==0) 
-		          adr = Integer.parseInt(b);
-		        else{
-		          adr = Integer.parseInt(b,16);    
-		        }
+		      	  if (dec_hex==0) 
+		     	     adr = Integer.parseInt(b);
+		    	  else{
+		     	     adr = Integer.parseInt(b,16);    
+		          }
 			}
-		
 			return adr;		//operand출력
-			
 		}
-		
 	}
-	
 	
 	class instructionCycle{
 	   private int DR, AR, AC, IR, INPR, OUTPR, TR, SC, indirection, head, I, E, S, D7, INpR, FGI, OUTR, FGO, IEN,HLT;   //각각의 메모리 또는 레지스터
@@ -304,18 +282,14 @@ public class Assembler {
 	   int PC = transfer.ORG,var_num=transfer.END-transfer.HLT-1,ti=0;         //프로그램 카운터
 	   int[] M = new int[5000];
 	   String var[]=  new String[var_num];
-
 	   private String symbol,operation;
 
-
-	   instructionCycle(){                
-	   }
+	   instructionCycle(){ }
 	   instructionCycle(int m[]){                
 		    this.M=m;
 		    showMemory();
 		   }
 
-	   
 	   private void showMemory() {
 		   System.out.println("Location\tInstruction");
 		   for(int i=transfer.ORG;i<transfer.END;i++) {
@@ -323,27 +297,16 @@ public class Assembler {
 		   }
 	   }
 
-
 	   private String symbolCheck(int a) {                          //instruction 값인지 체크해 심볼을 문자열로 반환하는 메소드
 	      //instruction 값인지 체크해 심볼을 문자열로 반환하는 메소드
-
-
 	      head = (short) (a / 0x1000) ; 
 	      //16진수의 맨 앞을 얻음 ex) 0x3006 이면 head = 3
 	      D7 = 0;
-
-
 	      indirection = (short) (head / 8); 
 	      //indirect bit 를 얻음 ex) 0~7로 시작하면 0, 8~f로 시작하면 1
-
-
 	      symbol = "";
-
-
 	      String address = Integer.toHexString(a + 0x10000).substring(2);   
 	      //주소값 넣는다.
-
-
 	      if(head == 7){ // 7xxx 
 	         address = "   "; //주소를 없앤다
 	         D7 = 1;
@@ -440,46 +403,35 @@ public class Assembler {
 	         if (indirection == 1) // indirect bit 가 1 이면 간접 주소임을 표시한다.
 	            symbol = symbol + " I";
 	      }
-
 	      return symbol + "  " + address; // symbol + 주소값 반환
-
-
 	   }
-
 
 	 
 	   private void T0(){               // T0 일 때
 	      AR = (short) PC;
 	   }
 
-
 	   private void T1(){              // T1 일 때
 	      IR = M[AR]; PC = (short) (PC + 1);
 	   }
-
 
 	   private void T2(){             //T2 일 때
 	      symbol = symbolCheck(M[AR]);
 	      AR = (short) (IR & 0x0fff); I = indirection;
 	   }
 
-
-	   private void instructionCheck() {  //인스트럭션 체크하고 명령어에 따라 T3, T4, T5 ... 할일 결정
-		  
+	   private void instructionCheck() {  //인스트럭션 체크하고 명령어에 따라 T3, T4, T5 ... 할일 결정	  
 	       symbol = symbol.substring(0,3);
 	       if(head == 7){      //D7 = 1 이고, I = 0 인경우
 	         switch(symbol) {
 	         case "CLA":
-	            AC = 0;
-	           
+	            AC = 0;           
 	            break;
 	         case "CLE":
-	            E = 0;
-	            
+	            E = 0;      
 	            break;
 	         case "CMA":
 	            AC = (short) ~(short)AC;
-	          
 	         case "CME":
 	            if(E == 0){
 	               E = 1;
@@ -487,183 +439,113 @@ public class Assembler {
 	            else{
 	               E = 0;
 	            }
-	       
 	            break;
 	         case "CIR":
-	            E = (short) (AC & 0x0001); AC = (short) ((short)AC >> 1);
-	           
+	            E = (short) (AC & 0x0001); AC = (short) ((short)AC >> 1);     
 	            break;
 	         case "CIL":
-	            E = I; AC = (short) ((short)AC << 1);
-	           
+	            E = I; AC = (short) ((short)AC << 1);      
 	            break;
 	         case "INC":
 	            AC = (short) ((short)AC + (short)1);
-	         
 	            break;
 	         case "SPA":
 	            if(I == 0)
 	               PC = (short) ((short)PC + (short)1);
-	       
 	            break;
 	         case "SNA":
 	            if(I == 1)
 	               PC = (short) (PC + 1);
-	           
 	            break;
 	         case "SZA":
 	            if(AC == 0)
 	               PC = (short) (PC + 1);
-
-
 	            break;
 	         case "SZE":
 	            if(E == 0)
 	               PC = (short) (PC + 1);
-
-
 	            break;
 	         case "HLT":
 	            S = 0;
-	            HLT=1;
-	            
+	            HLT=1;            
 	         }
 	         SC = 0;
-
-
 	      }
 	      else if(head == 0xf){  //D7 = 1 이고, I = 1 인경우
-
-
 	         switch(symbol){
 	         case "INP":
-
-
 	            AC = INPR; FGI = 0;
 	            break;
 	         case "OUT":
-
-
 	            OUTR = (short) (0x00ff & AC); FGO = 0;
 	            break;
 	         case "SKI":
-
-
 	            if(FGI == 1){
 	               PC += 1;
 	            }
 	            break;
 	         case "SKO":
-
-
 	            if(FGO==1){
 	               PC+=1;
 	            }
 	            break;
 	         case "ION":
-
-
 	            IEN = 1;
 	            break;
 	         case "IOF":
-
-
 	            IEN = 0;
 	            break;
 	         }
-
-
 	      }
 	      else{
 	         if(I == 1)
 	            AR = M[AR];
-
-
 	         switch(symbol){
 	         case "AND":
-
-
 	            DR = M[AR];
-
-
 	            AC = (short) (AC & DR);
 	            SC = 0;
-
-
 	            break;
 	         case "ADD":
 	            int Cout = 0;
-
-
 	            DR = M[AR];
-
-
 	            if(AC < 0 && AC + DR < 0 && DR > 0 || AC > 0 && AC + DR > 0 && DR < 0){ //오버플로우가 일어났을때
 	               Cout = 1;
 	            }
 	            AC = (short) (AC + DR);
 	            E = (short) Cout;
 	            SC = 0;
-
-
 	            break;
 	         case "LDA":
 	            DR = M[AR];
-
-
 	            AC = DR;
 	            SC = 0;
-
-
 	            break;
 	         case "STA":
-
-
 	            M[AR] = AC;
 	            SC = 0;
-
-
 	            break;
 	         case "BUN":
-
-
 	            PC = AR;
 	            SC = 0;
-
-
 	            break;
 	         case "BSA":
-
-
 	            M[AR] = PC;
 	            AR = (short) (AR + 1);
-
-
 	            PC = AR;
 	            SC = 0;
-
-
 	            break;
 	         case "ISZ":
-
-
 	            DR = M[AR];
-
-
 	            DR = (short) (DR + 1);
-
-
 	            M[AR] = DR;
 	            if(DR == 0){
 	               PC = (short) (PC + 1);
 	            }
 	            SC = 0;
-
-
 	         }
 	      }
 	   }
-
 
 	   void printCycle(){//명령어 사이클을 눈에 보이게 프린트 해준다.
 		   int count=transfer.HLT; 
@@ -691,7 +573,6 @@ public class Assembler {
 	       }
 		   //hashtable key-value 출력부
 	   		for(int i=0;i<var_num;i++) { 
-
 		   		Set<Entry<String, Integer>> entrySet = First_Pass.ht.entrySet();
 				for (Entry<String, Integer> entry : entrySet) {
 					if(Integer.toHexString(transfer.HLT+1+i).equals(Integer.toHexString(entry.getValue()))) {
