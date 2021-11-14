@@ -1,20 +1,10 @@
-
-/* 
-public class Assembler {
-	   public static void main(String[] args) {
-
-	   
-	   }
-	}
-*/
-
 package Assembler;
-
 
 import java.util.Hashtable;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Scanner;
+import java.util.Set;
 
 
 public class Assembler {
@@ -58,12 +48,11 @@ public class Assembler {
 		
 
 		void firstpass() {		//퍼스트패스 루틴 시작
+			int sp_check=0;
 			startpoint=LC = 0;				//set LC as 0,  startpoint = transfer 클래스에 ORG값(저장시작하는 인덱스(LC))을 전달해주기위함
 			seq=0; 							//seq = code[LC]에 무사히 값 전달하도록하는 counter   (input[seq])
 			for(int i=0; i<length; i++){		//배열 원소 개수만큼 반복
-				if(this.input[i]==null)
-					continue;
-				
+
 				if(this.input[seq].contains(",")) {			//라벨 유무 판별 조건문 
 					bool = true;				//명령어에 콤마가 있으면 bool을 true로 설정 
 					int idx = this.input[seq].indexOf(","); 	//,기준으로 나누기위해 ,의 인덱스 따로 저장
@@ -86,15 +75,18 @@ public class Assembler {
 					switch (codecut[0]) {				//명령어 필드 (opcode) 
 					case "ORG":					//ORG이면 
 					{
-						LC = Integer.parseInt(codecut[1]);	//LC를 ORG 다음에 오는 숫자로 설정해주고 
-						startpoint= LC; 					//다른 클래스에 전달하기위해 starpoint 설정(ORG로 지정한 LC 시작값)
+						LC = Integer.parseInt(codecut[1],16);	//LC를 ORG 다음에 오는 숫자로 설정해주고 
+						if(sp_check==0) {
+							startpoint= LC;
+							sp_check=1;
+						}//다른 클래스에 전달하기위해 starpoint 설정(ORG로 지정한 LC 시작값)
 						seq++;
 						continue;
 					}
 					default: 								//ORG가 아니면 
 					{
 						this.code[LC++]=input[seq++];   //instruction 저장
-						 								//LC increment
+
 						continue;
 					}
 					case "END":					//END면 
@@ -119,8 +111,7 @@ public class Assembler {
 		//I==0(direct),1(indirect) 
 		//ORG = 배열 시작 인덱스 HLT = HLT값의 인덱스, END = 유효한 값이 있는 인덱스의 끝. No_op = 레지스터명령, I/O명령과같이 operand가 없는 명령 확인
 		int[] M_temp = new int[5000];
-		transfer(){
-		}
+
 		transfer(String[] code,int sp,int ep){   					//입력한 문자열배열, 시작 인덱스, 끝 인덱스 받아옴
 			int idx,lc,idx2,result_op,result_adr,trans=0;	
 			//idx,idx2 = 문자열을 나누는 기준
@@ -132,13 +123,17 @@ public class Assembler {
 			END=ep;		 //  END도 동일 
 			while(lc<ep) {		//배열 중 값이 들어있는 부분만 반복문 진행
 				I=0;			//direct로 일단 초기화
+				if(code[lc]==null) {
+					lc++;
+					continue;
+				}
 				idx= code[lc].indexOf(" ");			 //공백의 인덱스를 가져와서 그 인덱스르 기준으로 나눔. 
 				if(idx==-1) { 						 //해당 문자열 없으면 -1 리턴 명령어 3자리만 따옴
 					symbol=code[lc].substring(0,3);
 					No_op=1;						 //초기화
 				}
 				else {
-				symbol = code[lc].substring(0,idx);	 //코드에 있는 라벨 명령어 기호 저장 
+					symbol = code[lc].substring(0,idx);	 //코드에 있는 라벨 명령어 기호 저장 
 				}
 				if(symbol.equals("HLT")) {
 					HLT=lc;					//HLT의 인덱스 따로 저장(instructionCycle에서 변수관리를 위함)
@@ -150,7 +145,7 @@ public class Assembler {
 					operand = code[lc].substring(idx+1);
 					idx2= operand.indexOf(" ");
 					if(idx2!=-1) {
-						if(operand.substring(idx2)=="I") {
+						if(operand.substring(idx2+1).equals("I")) {
 							I=1;
 							operand= operand.substring(0,idx2);
 						}
@@ -166,11 +161,9 @@ public class Assembler {
 				result_op = trans_op(symbol); // 명령어 symbol 16진수 변환
 				
 				//operand check
-				result_adr = trans_adr(operand);  //operand 16진수변환
+				result_adr = trans_adr(operand,code);  //operand 16진수변환
 				trans = result_op+result_adr;  //7020
-				lc++;
-				M_temp[sp++]=trans; //16진수로 변환한 배열
-				
+				M_temp[lc++]=trans; //16진수로 변환한 배열
 			}
 		}
 		static int trans_op(String a) {    //1.슈도 명령어 16진수 반환메소드
@@ -279,26 +272,35 @@ public class Assembler {
 	        return op;
 	     }
 		
-		static int trans_adr(String b) {	//operand에 라벨이 들어있는 경우
+		static int trans_adr(String b,String[] code) {	//operand에 라벨이 들어있는 경우
 			int adr=0;
 			if(First_Pass.ht.containsKey(b)) {  //hashtable에 해당 라벨이 있으면 
 				adr = First_Pass.ht.get(b);		//그 라벨의 유효주소 가져옴
+				
+			/*	if(I==1) {
+					if(code[adr].substring(0,3).equals("HEX")) {
+						System.out.println(code[adr].substring(4));
+						adr=Integer.parseInt(code[adr].substring(4));
+					}
+				 	adr= Integer.parseInt(code[adr]);
+					I=0;
+				}
+				*/
 			}
-			
+				
 			else if (b==" ") {				//Non-MRI
 				adr=0;
 				//피연산자없는거
 			}
 			
 			else { 							//상수			
-	            if (dec_hex==0) 
-	                adr = Integer.parseInt(b);
-	            else{
-	                adr = Integer.parseInt(b,16);    
-	                }
+		        if (dec_hex==0) 
+		          adr = Integer.parseInt(b);
+		        else{
+		          adr = Integer.parseInt(b,16);    
+		        }
 			}
-			
-			
+		
 			return adr;		//operand출력
 			
 		}
@@ -320,17 +322,14 @@ public class Assembler {
 	   }
 	   instructionCycle(int m[]){                
 		    this.M=m;
-			for(String key : First_Pass.ht.keySet()){ 
-				var[ti++] = key;
-			}
 		    showMemory();
 		   }
 
 	   
 	   private void showMemory() {
 		   System.out.println("Location\tInstruction");
-		   for(int i=transfer.ORG;i<transfer.END-1;i++) {
-			   System.out.println("  "+i+"\t\t "+Integer.toHexString(M[i]+0x100000).substring(2).toUpperCase());
+		   for(int i=transfer.ORG;i<transfer.END;i++) {
+			   System.out.println("  "+Integer.toHexString(i).toUpperCase()+"\t\t "+Integer.toHexString(M[i]+0x110000).substring(2).toUpperCase());
 		   }
 	   }
 
@@ -339,9 +338,8 @@ public class Assembler {
 	      //instruction 값인지 체크해 심볼을 문자열로 반환하는 메소드
 
 
-		 
-	      head = (short) ((short)a / 0x1000) ; 
-	      //16진수의 맨 앞을 얻음 ex) 0x3006 이면 head = 6
+	      head = (short) (a / 0x1000) ; 
+	      //16진수의 맨 앞을 얻음 ex) 0x3006 이면 head = 3
 	      D7 = 0;
 
 
@@ -450,9 +448,8 @@ public class Assembler {
 	            break;
 	         }
 	         if (indirection == 1) // indirect bit 가 1 이면 간접 주소임을 표시한다.
-	            symbol = "I " + symbol;
+	            symbol = symbol + " I";
 	      }
-
 
 	      return symbol + "  " + address; // symbol + 주소값 반환
 
@@ -478,8 +475,9 @@ public class Assembler {
 
 
 	   private void instructionCheck() {  //인스트럭션 체크하고 명령어에 따라 T3, T4, T5 ... 할일 결정
+		  
 	       symbol = symbol.substring(0,3);
-		   if(head == 7){      //D7 = 1 이고, I = 0 인경우
+	       if(head == 7){      //D7 = 1 이고, I = 0 인경우
 	         switch(symbol) {
 	         case "CLA":
 	            AC = 0;
@@ -680,10 +678,10 @@ public class Assembler {
 	   void printCycle(){//명령어 사이클을 눈에 보이게 프린트 해준다.
 		   int count=transfer.HLT; 
 		   //연산과정 출
-		   while(count>=transfer.ORG){
+		   while(true){
 			    System.out.println();
 	            System.out.println("-- Location : " 
-	            +PC );
+	            +Integer.toHexString(PC).toUpperCase() );
 	            System.out.println("01.입력 = "+Integer.toHexString(M[PC]+0x100000).substring(2).toUpperCase());
 	            T0();
 	            T1();
@@ -691,27 +689,39 @@ public class Assembler {
 	            instructionCheck();
 	            System.out.println("02.명령어 형식 = "+operation);
 	            System.out.println("03.Symbol ="+symbol.toUpperCase());
-	            System.out.println("AR["+Integer.toHexString(AR + 0x10000).substring(2).toUpperCase() +"], "
-	            +"PC["+Integer.toHexString(PC + 0x10000).substring(2).toUpperCase() +"], "
-	            		+"DR["+Integer.toHexString(DR + 0x10000).substring(2).toUpperCase() +"], "
-	            +"AC["+Integer.toHexString(AC + 0x10000).substring(2).toUpperCase() +"],"
-	            +"IR["+Integer.toHexString(IR + 0x10000).substring(2).toUpperCase()+"], "
-	            +"TR["+Integer.toHexString(TR + 0x10000).substring(2).toUpperCase()+"]");
-
-
+	            System.out.println("AR["+Integer.toHexString(AR + 0x11000).substring(2).toUpperCase() +"], "
+	            +"PC["+Integer.toHexString(PC + 0x11000).substring(2).toUpperCase() +"], "
+	            		+"DR["+Integer.toHexString(DR + 0x10000).substring(1).toUpperCase() +"], "
+	            +"AC["+Integer.toHexString(AC + 0x10000).substring(1).toUpperCase() +"],"
+	            +"IR["+Integer.toHexString(IR + 0x10000).substring(1).toUpperCase()+"], "
+	            +"TR["+Integer.toHexString(TR + 0x10000).substring(1).toUpperCase()+"]");
 	            System.out.println();
-	           
-	            count= count-1;
+	           if(symbol.toUpperCase().equals("HLT"))
+	        	   break;
+	            
 	       }
+
 		   //hashtable key-value 출력부
 	   		for(int i=0;i<var_num;i++) { 
-	   		System.out.print(var[i]+" : "+(short)M[transfer.HLT+1+i]+"\t");
+
+		   		Set<Entry<String, Integer>> entrySet = First_Pass.ht.entrySet();
+				for (Entry<String, Integer> entry : entrySet) {
+					if(Integer.toHexString(transfer.HLT+1+i).equals(Integer.toHexString(entry.getValue()))) {
+						var[i]=entry.getKey();
+					}
+				}
+	   			if(var[i]==null)
+	   				continue;
+				System.out.print(var[i]+" : "+(short)M[transfer.HLT+1+i]+"\t");
 	   		}
 	   		System.out.println();
 	   		
 	   		//현재 메모리 상태 출력
-	   		for(int i=transfer.ORG;i<transfer.END;i++) {
-	   			System.out.print("M["+i+"] : "+Integer.toHexString(M[i]+ 0x10000).substring(1).toUpperCase()+"\t");
+
+	   		for(int i=transfer.ORG;i<=transfer.END;i++) {
+	   			if(M[i]==0)
+	   				continue;
+	   			System.out.print("M["+Integer.toHexString(i)+"] : "+Integer.toHexString(M[i]+ 0x110000).substring(2).toUpperCase()+"\t");
 	   		}
 	   }
 	}
