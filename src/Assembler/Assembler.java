@@ -276,16 +276,6 @@ public class Assembler {
 			int adr=0;
 			if(First_Pass.ht.containsKey(b)) {  //hashtable에 해당 라벨이 있으면 
 				adr = First_Pass.ht.get(b);		//그 라벨의 유효주소 가져옴
-				
-			/*	if(I==1) {
-					if(code[adr].substring(0,3).equals("HEX")) {
-						System.out.println(code[adr].substring(4));
-						adr=Integer.parseInt(code[adr].substring(4));
-					}
-				 	adr= Integer.parseInt(code[adr]);
-					I=0;
-				}
-				*/
 			}
 				
 			else if (b==" ") {				//Non-MRI
@@ -677,7 +667,7 @@ public class Assembler {
 
 	   void printCycle(){//명령어 사이클을 눈에 보이게 프린트 해준다.
 		   int count=transfer.HLT; 
-		   //연산과정 출
+		   //연산과정 출력
 		   while(true){
 			    System.out.println();
 	            System.out.println("-- Location : " 
